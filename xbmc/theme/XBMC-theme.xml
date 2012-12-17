@@ -366,7 +366,7 @@
 		<template name="postbit_find" version="0"><![CDATA[<a href="search.php?action=finduser&amp;uid={$post['uid']}" class="button button-small link-find" title="{$lang->postbit_find_title}"><span class="icon"></span>{$lang->postbit_find}</a>]]></template>
 		<template name="forumjump_advanced" version="1608"><![CDATA[<form action="forumdisplay.php" method="get">
 	<label for="forumJump">{$lang->forumjump}</label>
-	<select name="{$name}" onchange="window.location=({$forum_link})">
+	<select name="{$name}" id="forumJump" onchange="window.location=({$forum_link})">
 		<option value="-1" {$jumpsel['default']}>{$lang->forumjump_select}</option>
 		<option value="-1">--------------------</option>
 		<option value="-4">{$lang->forumjump_pms}</option>
@@ -1174,7 +1174,7 @@
 </fieldset>]]></template>
 		<template name="postbit_email" version="0"><![CDATA[<a href="member.php?action=emailuser&amp;uid={$post['uid']}" class="button button-small link-email" title="{$lang->postbit_email_title}"><span class="icon"></span>{$lang->postbit_email}</a>]]></template>
 		<template name="postbit_iplogged_hiden" version="1606"><![CDATA[<span class="ipAddress">{$lang->postbit_ipaddress} <a href="moderation.php?action=getip&amp;pid={$post['pid']}">{$lang->postbit_ipaddress_logged}</a></span>]]></template>
-		<template name="forumbit_depth1_cat" version="1608"><![CDATA[<div class="caption">
+		<template name="forumbit_depth1_cat" version="1606"><![CDATA[<div class="caption">
 	<span class="expcolimage"><img src="{$theme['imgdir']}/{$expcolimage}" id="cat_{$forum['fid']}_img" class="expander" alt="{$expaltext}" title="{$expaltext}" /></span>
 	<h2><a href="{$forum_url}">{$forum['name']}</a></h2>
 </div>
@@ -1196,7 +1196,10 @@
 </table>]]></template>
 		<template name="postbit_quickdelete" version="0"><![CDATA[<a href="editpost.php?pid={$post['pid']}" onclick="Thread.deletePost({$post['pid']}); return false;" id="quick_delete_{$post['pid']}" class="button button-small link-quickDelete noJShide" title="{$lang->postbit_qdelete_title}"><span class="icon"></span>{$lang->postbit_qdelete}</a>]]></template>
 		<template name="forumdisplay_newthread" version="0"><![CDATA[<a href="newthread.php?fid={$fid}" class="button link-postThread"><span class="icon"></span>{$lang->post_thread}</a>]]></template>
-		<template name="headerinclude" version="1606"><![CDATA[<link rel="alternate" type="application/rss+xml" title="{$lang->latest_threads} (RSS 2.0)" href="{$mybb->settings['bburl']}/syndication.php" />
+		<template name="headerinclude" version="1608"><![CDATA[<link rel="shortcut icon" href="http://xbmc.org/favicon.ico" type="image/x-ico; charset=binary">
+<link rel="icon" href="http://xbmc.org/favicon.ico" type="image/x-ico; charset=binary">
+
+<link rel="alternate" type="application/rss+xml" title="{$lang->latest_threads} (RSS 2.0)" href="{$mybb->settings['bburl']}/syndication.php" />
 <link rel="alternate" type="application/atom+xml" title="{$lang->latest_threads} (Atom 1.0)" href="{$mybb->settings['bburl']}/syndication.php?type=atom1.0" />
 <meta http-equiv="Content-Type" content="text/html; charset={$charset}" />
 <meta name="keywords" content="XBMC Media Center, Xbox Media Center, XBMC, Mediaplayer, HTPC, home theater, OpenSource, cross platform, Windows, Linux, Mac, iOS, Android, Apple-TV, ATV, iPhone, iPod, iPad" />
