@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<theme name="XBMC" version="1608">
+<theme name="XBMC" version="1609">
 	<properties>
 		<templateset><![CDATA[2]]></templateset>
 		<editortheme><![CDATA[default]]></editortheme>
@@ -1452,7 +1452,7 @@
 		<template name="previewpost" version="1606"><![CDATA[<div class="caption"><strong>{$lang->post_preview}</strong></div>
 {$postbit}]]></template>
 		<template name="postbit_posturl" version="1606"><![CDATA[<span class="post-id"><strong>{$lang->postbit_post} <a href="{$post['postlink']}#pid{$post['pid']}">#{$postcounter}</a></strong>{$post['inlinecheck']}</span>]]></template>
-		<template name="codebuttons" version="1606"><![CDATA[<script type="text/javascript" src="xbmc/js/editor.js?ver=0011"></script>
+		<template name="codebuttons" version="1609"><![CDATA[<script type="text/javascript" src="xbmc/js/editor.js?ver=0012"></script>
 <script type="text/javascript">
 <!--
 	{$editor_language}
