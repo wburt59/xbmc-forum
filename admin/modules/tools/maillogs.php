@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id: maillogs.php 5807 2012-04-20 10:03:34Z Tomm $
+ * $Id$
  */
 
 // Disallow direct access to this file for security reasons

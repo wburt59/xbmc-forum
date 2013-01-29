@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id: attachments.php 5765 2012-03-27 09:52:45Z Tomm $
+ * $Id$
  */
 
 // Disallow direct access to this file for security reasons

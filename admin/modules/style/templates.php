@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id: templates.php 5812 2012-04-20 11:48:27Z Tomm $
+ * $Id$
  */
 
 // Disallow direct access to this file for security reasons

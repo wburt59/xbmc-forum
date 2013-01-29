@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id: functions_view_manager.php 5823 2012-05-03 15:40:09Z Tomm $
+ * $Id$
  */
 
 /**

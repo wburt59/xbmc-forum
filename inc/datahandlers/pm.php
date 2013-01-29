@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id: pm.php 5756 2012-03-09 15:05:12Z Tomm $
+ * $Id$
  */
 
 // Disallow direct access to this file for security reasons

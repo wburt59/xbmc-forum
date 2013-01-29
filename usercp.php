@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id: usercp.php 5789 2012-04-19 13:50:38Z Tomm $
+ * $Id$
  */
 
 define("IN_MYBB", 1);

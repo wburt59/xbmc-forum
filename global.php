@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id: global.php 5793 2012-04-19 14:27:33Z Tomm $
+ * $Id$
  */
 
 $working_dir = dirname(__FILE__);

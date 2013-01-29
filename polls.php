@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id: polls.php 5826 2012-05-04 10:30:10Z Tomm $
+ * $Id$
  */
 
 define("IN_MYBB", 1);

@@ -3,7 +3,7 @@
  * MyBB 1.6 English Language Pack
  * Copyright 2010 MyBB Group, All Rights Reserved
  * 
- * $Id: warnings.lang.php 5814 2012-04-20 14:36:07Z Tomm $
+ * $Id$
  */
  
 $l['nav_profile'] = "Profile of {1}";
