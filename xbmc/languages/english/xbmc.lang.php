@@ -44,4 +44,9 @@ $l['postbit_reply'] = 'reply';
 
 // general
 $l['toplinks_memberlist'] = 'Members';
+
+// editor
+$l['editor_title_imgur'] = 'Insert imgur.com gallery';
+$l['editor_enter_imgur'] = 'Enter the id from your imgur gallery, like "http://imgur.com/gallery/aBcDeF" -> "aBcDeF"';
+
 ?>

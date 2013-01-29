@@ -238,7 +238,8 @@ messageEditor.prototype = {
 				{type: 'button', name: 'quote', sprite: 'quote', insert: 'quote', title: this.options.lang.title_quote},
 				{type: 'button', name: 'code', sprite: 'code', insert: 'code', title: this.options.lang.title_code},
 				{type: 'button', name: 'php', sprite: 'php', insert: 'php', title: this.options.lang.title_php},
-				{type: 'button', name: 'video', insert: 'video', image: 'television.gif', dropdown: true, title: this.options.lang.title_video, options: this.videos}
+				{type: 'button', name: 'video', insert: 'video', image: 'television.gif', dropdown: true, title: this.options.lang.title_video, options: this.videos},
+				{type: 'button', name: 'imgur', insert: 'imgur', sprite: 'image imgur', title: this.options.lang.title_imgur}
 			]
 		});
 
@@ -1119,6 +1120,20 @@ messageEditor.prototype = {
 		this.setDropDownMenuActiveItem($('editor_item_video'), 0);
 	},
 
+	insertImgur: function()
+	{
+		imgur = prompt(this.options.lang.enter_imgur, "");
+
+		if(imgur)
+		{
+			var imgurId = imgur;
+			if (imgur.indexOf('/') > -1) {
+				imgurId = imgur.substring(imgur.lastIndexOf('/') +1).match(/^[a-zA-Z0-9]+/);
+			}
+			this.performInsert("[imgur]" + imgurId + "[/imgur]", "", true);
+		}
+	},
+
 	insertMyCode: function(code, extra)
 	{
 		this.restartEditorSelection();
@@ -1139,6 +1154,9 @@ messageEditor.prototype = {
 				break;
 			case "video":
 				this.insertVideo(extra);
+				break;
+			case "imgur":
+				this.insertImgur();
 				break;
 			default:
 				var already_open = false;

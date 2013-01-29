@@ -36,7 +36,7 @@ $plugins->add_hook("datahandler_post_insert_post", "xbmc_CleanupPostBeforeInsert
 $plugins->add_hook("datahandler_post_update", "xbmc_CleanupPostBeforeInsert");
 $plugins->add_hook("datahandler_post_insert_thread_post", "xbmc_CleanupPostBeforeInsert");
 
-
+$plugins->add_hook("mycode_add_codebuttons", "xbmc_AddMybbCodeButtons");
 
 
 /**
@@ -276,12 +276,15 @@ function xbmc_ParseMessage($message) {
 	global $mybb, $forum;
 
 	// no [imgur] tags outside skin sections - thus convert em regular links if found in messages
+	/**
+	 * This is disabled as we for now allow imgur galleries globally. If it's abused to much, enable this section again
 	if (isset($forum) && $forum['fid']) {
 		$parents = explode(',', get_parent_list($forum['fid']));
 		if (!in_array(12, $parents) && !in_array(3, $parents)&& !in_array(67, $parents)) {
 			$message = preg_replace('!\[imgur\](.*)\[/imgur\]!is', 'http://imgur.com/a/$1 (no galleries allowed here)', $message);
 		}
 	}
+	*/
 
 	return $message;
 }
@@ -346,6 +349,20 @@ function xbmc_CleanupPostBeforeInsert(&$postHandler) {
 	if (isset($message)) {
 		$message = xbmc_ParseMessage($message, TRUE);
 	}
+}
+
+/**
+ * Adds custom mybb code buttons
+ *
+ * @param array $languageStrings
+ * @return array The languageStrings
+ */
+function xbmc_AddMybbCodeButtons(array $languageStrings) {
+	$customStrings = array(
+		'editor_title_imgur',
+		'editor_enter_imgur'
+	);
+	return array_merge($languageStrings, $customStrings);
 }
 
 /**
