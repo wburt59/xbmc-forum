@@ -24,7 +24,18 @@ $plugins->add_hook("forumdisplay_start", "xbmc_ForumDisplayStart");
 $plugins->add_hook("showteam_start", "xbmc_DenyAccessToSectionIfNoValidUser");
 $plugins->add_hook("memberlist_start", "xbmc_DenyAccessToSectionIfNoValidUser");
 
-$plugins->add_hook("text_parse_message", "xbmc_ParseMessage");
+$plugins->add_hook("text_parse_message", "xbmc_ConvertToPlaintext");
+$plugins->add_hook("editpost_action_start", "xbmc_CleanupIncomingMessage");
+$plugins->add_hook("newreply_do_newreply_start", "xbmc_CleanupIncomingMessage");
+$plugins->add_hook("newreply_start", "xbmc_CleanupIncomingMessage");
+$plugins->add_hook("newthread_do_newthread_start", "xbmc_CleanupIncomingMessage");
+$plugins->add_hook("usercp_editsig_start", "xbmc_CleanupSignature");
+$plugins->add_hook("usercp_do_editsig_start", "xbmc_CleanupSignature");
+
+$plugins->add_hook("datahandler_post_insert_post", "xbmc_CleanupPostBeforeInsert");
+$plugins->add_hook("datahandler_post_update", "xbmc_CleanupPostBeforeInsert");
+$plugins->add_hook("datahandler_post_insert_thread_post", "xbmc_CleanupPostBeforeInsert");
+
 
 
 
@@ -52,7 +63,7 @@ function xbmc_info()
 		"website"		=> "http://xbmc.org",
 		"author"			=> "Team XBMC",
 		"authorsite"	=> "http://xbmc.or",
-		"version"		=> "0.3beta",
+		"version"		=> "0.4",
 		"guid" 			=> "",
 		"compatibility" => "*"
 	);
@@ -239,22 +250,102 @@ function xbmc_PreOutputPage($content) {
 }
 
 /**
- * allows to parse a Message after the default parser has parsed it
+ * Converts parts of the passed message to plaintext according to custom rules
+ *
+ * @param string	$message		The incoming message/post/signature
+ * @return string	The modified/adjusted message
+ */
+function xbmc_ConvertToPlaintext($message) {
+	global $mybb, $forum;
+
+	//fix/drop sizes from old forum
+	$message = preg_replace('!\[size=[a-z_-]+\](.+?)\[/size\]!is', '$1', $message);
+	// strip unwanted tags from signatures
+	$message = preg_replace('!\[imgur\](.*)\[/imgur\]!is', 'http://imgur.com/a/$1', $message);
+	
+	return $message;
+}
+
+/**
+ * allows to parse a Message with custom parsing rules (e.g. converting BBCode to HTML)
  *
  * @param string	$message		The incoming message/post/signature
  * @return string	The modified/adjusted message
  */
 function xbmc_ParseMessage($message) {
-	global $mybb;
+	global $mybb, $forum;
 
-	// no direct links in signatures
-	if ($mybb->input['action'] == 'do_editsig' && $mybb->input['signature'] && strlen($message)) {
-		$message = preg_replace('!\(https?:\/\/[^[:space:]]*\)!i', '', $message);
+	// no [imgur] tags outside skin sections - thus convert em regular links if found in messages
+	if (isset($forum) && $forum['fid']) {
+		$parents = explode(',', get_parent_list($forum['fid']));
+		if (!in_array(12, $parents) && !in_array(3, $parents)&& !in_array(67, $parents)) {
+			$message = preg_replace('!\[imgur\](.*)\[/imgur\]!is', 'http://imgur.com/a/$1 (no galleries allowed here)', $message);
+		}
 	}
 
-	//fix/drop sizes from old forum
-	$message = preg_replace('![size=[a-z_-]+\](.+?)\[/size\]!is', '$1', $message);
 	return $message;
+}
+
+/**
+ * The method cleans up new posts/threads and their previews.
+ * Unfortunately xbmc_ParseMessage isn't called in every occasion it seems :(
+ *
+ * @return void
+ */
+function xbmc_CleanupIncomingMessage() {
+	global $mybb, $fid;
+	if (isset($mybb->input['message'])) {
+		$mybb->input['message'] = xbmc_ParseMessage($mybb->input['message'], TRUE);
+	}
+}
+
+/**
+ * The method cleans up signatures when saved
+ *
+ * @return void
+ */
+function xbmc_CleanupSignature() {
+	global $mybb, $fid;
+	if (isset($mybb->input['signature']) && $mybb->input['signature']) {
+		$signature = $mybb->input['signature'];
+		// no direct links in signatures
+		$signature = preg_replace('!\(https?:\/\/[^[:space:]]*\)!i', '', $signature);
+		$signature = xbmc_ConvertToPlaintext($signature);
+		$mybb->input['signature'] = $signature;
+	}
+}
+
+/**
+ * Cleans up the incoming post before it's written to the DB.
+ * This is the last chance to alter the post. We use those hooks
+ * in order to also cleanup posts sent by tapatalk (hopefully)
+ *
+ * @param PostDataHandler $postHandler
+ * @return void
+ */
+function xbmc_CleanupPostBeforeInsert(&$postHandler) {
+	global $mybb, $fid, $message ;
+
+	$dataStorages = array(
+		'data',
+		'post_insert_data',
+		'post_update_data',
+#		'thread_insert_data',
+#		'thread_update_data'
+	);
+
+	foreach ($dataStorages as $dataKey) {
+		$dataSet = &$postHandler->$dataKey;
+		if (count($dataSet) && isset($dataSet['message'])) {
+			$dataSet['message'] = $mybb->input['message'] = xbmc_ParseMessage($dataSet['message'], TRUE);
+			
+		}
+	}
+	// $message is used in xmlhttp request and it's the only way to manipulate the return 
+	// value without using 'parse_message' hook that would add extra load on realtime parsing of the forum
+	if (isset($message)) {
+		$message = xbmc_ParseMessage($message, TRUE);
+	}
 }
 
 /**
