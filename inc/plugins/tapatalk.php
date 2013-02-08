@@ -517,12 +517,12 @@ function tapatalk_pre_output_page(&$page)
     $forumname = $mybb->settings['homename'];
     $tapatalk_detect_js_name = 'tapadetect.js';
     $settings = $mybb->settings;
-    $str = '<!-- Tapatalk smart banner head start -->
+    $tapatalk_smart_banner_head = '<!-- Tapatalk smart banner head start -->
 <meta name="apple-itune-app" content="app-id=307880732">
 <meta name="google-play-app" content="app-id=com.quoord.tapatalkpro.activity">
 <link rel="stylesheet" href="'.$mybb->settings['bburl'].'/'.$mybb->settings['tapatalk_directory'].'/smartbanner/jquery.smartbanner.css" type="text/css" media="screen">
-<!-- Tapatalk smart banner head end-->'.
-"
+<!-- Tapatalk smart banner head end-->';
+    $str = "
 <script type='text/javascript'>
         var tapatalk_ipad_msg = '{$settings['tapatalk_ipad_msg']}';
         var tapatalk_ipad_url  = '{$settings['tapatalk_ipad_url']}';
@@ -558,8 +558,12 @@ function tapatalk_pre_output_page(&$page)
     }
     </script>
     <!-- Tapatalk smart banner body end --> ';
+    // only add smartbanner if enabled
+    if ($settings['tapatalk_smartbanner_notifier']) {
+        $page = str_ireplace("</body>", "\n".$tapatalk_smart_banner_body."\n</body>", $page);
+        $str .= $tapatalk_smart_banner_head;
+    }
     $page = str_ireplace("</head>", $str . "\n<script type='text/javascript' src='{$mybb->settings['bburl']}/{$mybb->settings['tapatalk_directory']}/{$tapatalk_detect_js_name}'></script></head>", $page);
-    $page = str_ireplace("<body>", "<body>\n".$tapatalk_smart_banner_body, $page);
 }
 
 function tapatalk_get_url()
