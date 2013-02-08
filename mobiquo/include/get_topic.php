@@ -181,22 +181,12 @@ function get_topic_func($xmlrpc_params)
     ");
     $unreadStickyCount = $db->fetch_field($query, "threads");
 
-    $icon_urls_sql = "";
-    if($_SERVER['HTTP_MOBIQUO_ID'] == 10)
-    {
-        $icon_urls_sql = ", (
-            select group_concat(distinct u2.avatar separator '@@%#%@@')
-            FROM ".TABLE_PREFIX."posts p2
-            LEFT JOIN ".TABLE_PREFIX."users u2 ON (u2.uid = p2.uid)
-            where p2.tid = t.tid
-        ) as icon_urls";
-    }
 
     if($fpermissions['canviewthreads'] != 0)
     {
         // Start Getting Threads
         $query = $db->query("
-            SELECT t.*, {$ratingadd}{$select_rating_user}t.username AS threadusername, u.username, u.avatar, if({$mybb->user['uid']} > 0 and s.uid = {$mybb->user['uid']}, 1, 0) as subscribed, po.message, IF(b.lifted > UNIX_TIMESTAMP() OR b.lifted = 0, 1, 0) as isbanned $icon_urls_sql
+            SELECT t.*, {$ratingadd}{$select_rating_user}t.username AS threadusername, u.username, u.avatar, if({$mybb->user['uid']} > 0 and s.uid = {$mybb->user['uid']}, 1, 0) as subscribed, po.message, IF(b.lifted > UNIX_TIMESTAMP() OR b.lifted = 0, 1, 0) as isbanned
             FROM ".TABLE_PREFIX."threads t
             LEFT JOIN ".TABLE_PREFIX."users u ON (u.uid = t.uid){$select_voting}
             LEFT JOIN ".TABLE_PREFIX."banned b ON (b.uid = t.uid)
@@ -406,6 +396,9 @@ function get_topic_func($xmlrpc_params)
 			{
 				$new_topic['can_subscribe']  = new xmlrpcval(true, 'boolean');
 			}
+			//can_rename topic
+   			$can_rename = (is_moderator($fid, "caneditposts") || ($forumpermissions['caneditposts'] == 1 && $mybb->user['uid'] == $thread['uid'])) && $mybb->user['uid'] != 0;
+			
             if ($unreadpost)                                $new_topic['new_post']       = new xmlrpcval(true, 'boolean');
             if ($thread['sticky'])                          $new_topic['is_sticky']      = new xmlrpcval(true, 'boolean');
             if ($thread['subscribed'])                      $new_topic['is_subscribed']  = new xmlrpcval(true, 'boolean');
@@ -418,7 +411,7 @@ function get_topic_func($xmlrpc_params)
             if (is_moderator($fid, "candeleteposts"))       $new_topic['can_delete']     = new xmlrpcval(true, 'boolean');
             if (is_moderator($fid, "canmanagethreads"))     $new_topic['can_stick']      = new xmlrpcval(true, 'boolean');
             if (is_moderator($fid, "canopenclosethreads"))  $new_topic['can_approve']    = new xmlrpcval(true, 'boolean');
-            if (is_moderator($fid, "caneditposts"))         $new_topic['can_rename']     = new xmlrpcval(true, 'boolean');
+            if ($can_rename)         $new_topic['can_rename']     = new xmlrpcval(true, 'boolean');
             
             $topic_list[] = new xmlrpcval($new_topic, 'struct');
         }
@@ -467,12 +460,21 @@ function get_topic_func($xmlrpc_params)
             ), "struct");
         }
     }
-
+	$read_only_forums = explode(",", $settings['tapatalk_forum_read_only']);
+	$can_post = true;
+	if(empty($read_only_forums) || !is_array($read_only_forums))
+	{
+		$read_only_forums = array();
+	}
+	if(!($foruminfo['type'] == "f" && $foruminfo['open'] != 0 && $mybb->user['uid'] > 0 && $mybb->usergroup['canpostthreads']) || in_array($fid, $read_only_forums))
+	{
+		$can_post = false;
+	}
     $result = array(
         'total_topic_num' => new xmlrpcval($threadcount, 'int'),
         'forum_id'        => new xmlrpcval($fid, 'string'),
         'forum_name'      => new xmlrpcval(basic_clean($foruminfo['name']), 'base64'),
-        'can_post'        => new xmlrpcval($foruminfo['type'] == "f" && $foruminfo['open'] != 0 && $mybb->user['uid'] > 0 && $mybb->usergroup['canpostthreads'], 'boolean'),
+        'can_post'        => new xmlrpcval($can_post, 'boolean'),
         //'require_prefix'  => new xmlrpcval(false, 'boolean'), default as false
         'prefixes'        => new xmlrpcval($prefix_list, 'array'),
         'can_upload'      => new xmlrpcval($fpermissions['canpostattachments'], 'boolean'),

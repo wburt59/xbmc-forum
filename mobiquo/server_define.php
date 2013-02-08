@@ -462,7 +462,10 @@ $server_param = array(
     
     'm_rename_topic' => array(
         'function'  => 'm_rename_topic_func',
-        'signature' => array(array($xmlrpcArray, $xmlrpcString, $xmlrpcString)),
+        'signature' => array(
+    						array($xmlrpcArray,$xmlrpcString,$xmlrpcBase64),
+    						array($xmlrpcArray,$xmlrpcString,$xmlrpcBase64,$xmlrpcString),
+    						),
         'docstring' => '',
     ),
 
@@ -526,6 +529,36 @@ $server_param = array(
     	'signature' => array(array($xmlrpcStruct),
     						 array($xmlrpcStruct, $xmlrpcInt),
     						 array($xmlrpcStruct, $xmlrpcInt, $xmlrpcInt)),
+    ),
+    'register' => array (
+    	'function' => 'register_func',
+    	'signature' => array(array($xmlrpcStruct),
+                             array($xmlrpcStruct, $xmlrpcBase64,$xmlrpcBase64,$xmlrpcBase64),
+    						 array($xmlrpcStruct, $xmlrpcBase64,$xmlrpcBase64,$xmlrpcBase64,$xmlrpcString,$xmlrpcString),
+    						 ),
+    ),
+    
+    'update_password' => array (
+    	'function' => 'update_password_func',
+    	'signature' => array(array($xmlrpcStruct),
+    						 array($xmlrpcStruct, $xmlrpcBase64,$xmlrpcBase64),
+    						 array($xmlrpcStruct, $xmlrpcBase64,$xmlrpcString ,$xmlrpcString),
+    						 ),
+    ),
+    
+    'update_email' => array (
+    	'function' => 'update_password_func',
+    	'signature' => array(array($xmlrpcStruct),
+    						 array($xmlrpcStruct, $xmlrpcBase64,$xmlrpcBase64),
+    						 ),
+    ),
+    
+    'forget_password' => array (
+    	'function' => 'forget_password_func',
+    	'signature' => array(array($xmlrpcStruct),
+    						 array($xmlrpcStruct, $xmlrpcBase64 ),
+    						 array($xmlrpcStruct, $xmlrpcBase64,$xmlrpcString ,$xmlrpcString),
+    						 ),
     ),
     //**********************************************
     // Puch related functions

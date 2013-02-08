@@ -8,11 +8,11 @@ require_once MYBB_ROOT."inc/functions_indicators.php";
 require_once MYBB_ROOT."inc/functions_user.php";
 require_once MYBB_ROOT."inc/functions_modcp.php";
 require_once TT_ROOT.'parser.php';
-
 function get_thread_func($xmlrpc_params)
 {
     global $db, $lang, $mybb, $position, $plugins, $pids;
-
+	global $pforumcache, $currentitem, $forum_cache, $navbits, $base_url, $archiveurl;
+	
     $input = Tapatalk_Input::filterXmlInput(array(
         'topic_id'    => Tapatalk_Input::INT,
         'start_num'   => Tapatalk_Input::INT,
@@ -21,7 +21,7 @@ function get_thread_func($xmlrpc_params)
     ), $xmlrpc_params);
 
     $lang->load("showthread");
-
+	global $parser;
     $parser = new Tapatalk_Parser;
 
     // Get the thread details from the database.
@@ -49,7 +49,7 @@ function get_thread_func($xmlrpc_params)
     $thread['subject'] = $parser->parse_badwords($thread['subject']);
     $tid = $thread['tid'];
     $fid = $thread['fid'];
-
+	
     if(!$thread['username'])
     {
         $thread['username'] = $lang->guest;
@@ -204,6 +204,9 @@ function get_thread_func($xmlrpc_params)
         WHERE $pids
         ORDER BY p.dateline
     ");
+    
+	//can_rename topic
+    $can_rename = (is_moderator($fid, "caneditposts") || ($forumpermissions['caneditposts'] == 1 && $mybb->user['uid'] == $thread['uid'])) && $mybb->user['uid'] != 0;
 
     while($post = $db->fetch_array($query))
     {
@@ -332,8 +335,8 @@ function get_thread_func($xmlrpc_params)
                 }
                 else if ($mybb->settings[$thlprefix.'thankslike'] == "thanks")
                 {
-                    if (strpos($post['button_tyl'], 'thankyoulike_button_add')) $post_xmlrpc['can_thank'] = new xmlrpcval(true, 'boolean');
-                    if (strpos($post['button_tyl'], 'thankyoulike_button_del')) $post_xmlrpc['can_remove_thank'] = new xmlrpcval(true, 'boolean');
+                    if ($post['button_tyl']) $post_xmlrpc['can_thank'] = new xmlrpcval(true, 'boolean');
+                    if ($mybb->settings[$thlprefix.'removing'] == 1) $post_xmlrpc['can_remove_thank'] = new xmlrpcval(true, 'boolean');
                     if ($tyled) $post_xmlrpc['is_thanked'] = new xmlrpcval(true, 'boolean');
                     if ($tyl_list) $post_xmlrpc['thanks_info'] = new xmlrpcval($tyl_list, 'array');
                 }
@@ -350,7 +353,28 @@ function get_thread_func($xmlrpc_params)
     $isbanned = !!$db->fetch_field($query, "uid");
 
     $can_reply = $forumpermissions['canpostreplys'] != 0 && $mybb->user['suspendposting'] != 1 && ($thread['closed'] != 1 || is_moderator($fid)) && $forum['open'] != 0;
-
+    
+	/*build_tt_breadcrumb($fid);
+    $navgation_arr = $navbits;
+	if(is_array($navgation_arr) && count($navgation_arr) > 1)
+    {
+    	unset($navgation_arr[0]);
+        foreach ($navgation_arr as $navigation)
+        {
+        	$forum_id = $navigation['fid'];
+        	$sub_only = false;
+        	if($navigation['type'] != 'f')
+        	{
+        		$sub_only = true;
+        	}
+            $breadcrumb[] = new xmlrpcval(array(
+                'forum_id'    => new xmlrpcval($forum_id, 'string'),
+                'forum_name'  => new xmlrpcval($navigation['name'], 'base64'),
+				'sub_only' => new xmlrpcval($sub_only, 'boolean'),
+                ), 'struct');
+        }
+    }*/
+    
     $result = array(
         'total_post_num'  => new xmlrpcval($postcount, 'int'),
         'forum_id'        => new xmlrpcval($thread['fid'], 'string'),
@@ -382,9 +406,12 @@ function get_thread_func($xmlrpc_params)
     if (is_moderator($fid, "canmanagethreads"))     $result['can_stick']    = new xmlrpcval(true, 'boolean');
     if (is_moderator($fid, "canmanagethreads"))     $result['can_move']     = new xmlrpcval(true, 'boolean');
     if (is_moderator($fid, "canopenclosethreads"))  $result['can_approve']  = new xmlrpcval(true, 'boolean');
-    if (is_moderator($fid, "caneditposts"))         $result['can_rename']   = new xmlrpcval(true, 'boolean');
+    if ($can_rename)         $result['can_rename']   = new xmlrpcval(true, 'boolean');
     if ($mybb->usergroup['canmodcp'] == 1)          $result['can_ban']      = new xmlrpcval(true, 'boolean');
-
+    if (!empty($breadcrumb))
+    {
+    	$result['breadcrumb'] = new xmlrpcval($breadcrumb, 'array');
+    }
     $result['posts'] = new xmlrpcval($post_list, 'array');
 
     return new xmlrpcresp(new xmlrpcval($result, 'struct'));
@@ -408,4 +435,60 @@ if (!function_exists('build_prefixes'))
 
         return $threadprefix;
     }
+}
+
+function build_tt_breadcrumb($fid, $multipage=array())
+{
+	global $pforumcache, $currentitem, $forum_cache, $navbits, $lang, $base_url, $archiveurl;
+
+	if(!$pforumcache)
+	{
+		if(!is_array($forum_cache))
+		{
+			cache_forums();
+		}
+
+		foreach($forum_cache as $key => $val)
+		{
+			$pforumcache[$val['fid']][$val['pid']] = $val;
+		}
+	}
+
+	if(is_array($pforumcache[$fid]))
+	{
+		foreach($pforumcache[$fid] as $key => $forumnav)
+		{
+			
+			if($fid == $forumnav['fid'])
+			{
+				if($pforumcache[$forumnav['pid']])
+				{
+					build_tt_breadcrumb($forumnav['pid']);
+				}
+				
+				$navsize = count($navbits);
+				// Convert & to &amp;
+				$navbits[$navsize]['name'] = preg_replace("#&(?!\#[0-9]+;)#si", "&amp;", $forumnav['name']);
+				$navbits[$navsize]['type'] = $pforumcache[$fid][$forumnav['pid']]['type'];
+				if(IN_ARCHIVE == 1)
+				{
+					// Set up link to forum in breadcrumb.
+					if($pforumcache[$fid][$forumnav['pid']]['type'] == 'f' || $pforumcache[$fid][$forumnav['pid']]['type'] == 'c')
+					{
+						$navbits[$navsize]['fid'] = $forumnav['fid'];
+					}
+					else
+					{
+						$navbits[$navsize]['fid'] = "";
+					}
+				}
+				else
+				{
+					$navbits[$navsize]['fid'] = $forumnav['fid'];
+				}
+			}
+		}
+	}
+
+	return 1;
 }

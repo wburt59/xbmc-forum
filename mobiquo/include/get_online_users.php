@@ -35,7 +35,7 @@ function get_online_users_func()
 		
 	// Query for active sessions
 	$query = $db->query("
-		SELECT DISTINCT s.sid, s.ip, s.uid, s.time, s.location, u.username, s.nopermission, u.invisible, u.usergroup, u.displaygroup, u.avatar
+		SELECT DISTINCT s.sid, s.ip, s.uid, s.time, s.location, u.username, s.nopermission,s.useragent,u.invisible, u.usergroup, u.displaygroup, u.avatar
 		FROM ".TABLE_PREFIX."sessions s
 		LEFT JOIN ".TABLE_PREFIX."users u ON (s.uid=u.uid)
 		WHERE s.time>'$timesearch'
@@ -49,7 +49,16 @@ function get_online_users_func()
 	{
 		// Fetch the WOL activity
 		$user['activity'] = fetch_wol_activity($user['location'], $user['nopermission']);
-		
+		$user['from'] = 'broswer';
+		if(strpos($user['useragent'],'Android') !== false || strpos($user['useragent'],'iPhone') !== false || 
+		strpos($user['useragent'],'BlackBerry') !== false)
+		{
+			$user['from'] = 'mobile';
+		}
+		if(strpos($user['location'], 'mobiquo') !== false)
+		{
+			$user['from'] = 'tapatalk';
+		}
 		// Stop links etc. 
 		unset($user['activity']['tid']);
 		unset($user['activity']['fid']);
@@ -97,7 +106,7 @@ function get_online_users_func()
 					// Append an invisible mark if the user is invisible
 					if($user['invisible'] == 1)
 					{
-						$invisible_mark = "*";
+						$invisible_mark = "(*)";
 					}
 					else
 					{
@@ -106,7 +115,7 @@ function get_online_users_func()
 
 					//$user['username'] = format_name($user['username'], $user['usergroup'], $user['displaygroup']);
 					//$online_name = build_profile_link($user['username'], $user['uid']).$invisible_mark;
-					$online_name = $user['username'].$invisible_mark;
+					$online_name = $user['username'];
 				}
 			}
 			// We have a bot
@@ -123,7 +132,7 @@ function get_online_users_func()
 			}
 			
 			// Fetch the location name for this users activity
-			$location = strip_tags(build_friendly_wol_location($user['activity']));			
+			$location = $invisible_mark.strip_tags(build_friendly_wol_location($user['activity']));			
 	
 			$user_lists[] = new xmlrpcval(array(
 				'user_name'     => new xmlrpcval($online_name, 'base64'),
@@ -131,6 +140,7 @@ function get_online_users_func()
 				'user_id'       => new xmlrpcval($user['uid'], 'string'),
 				'display_text'  => new xmlrpcval($location, 'base64'),
 				'icon_url'      => new xmlrpcval(absolute_url($user['avatar']), 'string'),
+				'from'          => new xmlrpcval($user['from'], 'string'),
 			), 'struct');
 		
 		}

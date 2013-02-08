@@ -12,12 +12,16 @@ function get_config_func()
         'is_open'       => new xmlrpcval(isset($cache->cache['plugins']['active']['tapatalk']) && $mybb->settings['tapatalk_enable'], 'boolean'),
         'guest_okay'    => new xmlrpcval($mybb->usergroup['canview'] && $mybb->settings['boardclosed'] == 0, 'boolean'),
     );
-    
+    if(!isset($cache->cache['plugins']['active']['tapatalk']) || !$mybb->settings['tapatalk_enable'])
+    {
+    	$config_list['is_open'] = new xmlrpcval(false,'boolean');
+        $config_list['result_text'] = new xmlrpcval(basic_clean('Tapatalk is disabled'), 'base64');
+    }
     if ($mybb->settings['boardclosed'])
     {
+    	$config_list['is_open'] = new xmlrpcval(false,'boolean');
         $config_list['result_text'] = new xmlrpcval(basic_clean($mybb->settings['boardclosed_reason']), 'base64');
     }
-    
     if ($mybb->settings['tapatalk_push'])
     {
         $config_list['push'] = new xmlrpcval(1, 'string');
@@ -27,7 +31,10 @@ function get_config_func()
     {
         $config_list['reg_url'] = new xmlrpcval(basic_clean($mybb->settings['tapatalk_reg_url']), 'string');
     }
-    
+    if($mybb->version >= '1.6.9' && $mybb->settings['tapatalk_allow_register'])
+    {
+    	$config_list['inappreg'] = new xmlrpcval(1, 'string');
+    }
     
     foreach($mobiquo_config as $key => $value){
         if(!array_key_exists($key, $config_list) && $key != 'thlprefix'){

@@ -101,14 +101,23 @@ function login_func($xmlrpc_params)
         foreach($groups as $group){
             $xmlgroups[] = new xmlrpcval($group, "string");
         }
-
+		update_push();
         if ($settings['maxattachments'] == 0) $settings['maxattachments'] = 100;
-        
+	    $push_type = array();
+	    $userPushType = tt_get_user_push_type($mybb->user['uid']);
+	 	foreach ($userPushType as $name=>$value)
+	    {
+	    	$push_type[] = new xmlrpcval(array(
+	            'name'  => new xmlrpcval($name,'string'),
+	    		'value' => new xmlrpcval($value,'boolean'),                    
+	            ), 'struct');
+	    }
         $result = array(
             'result'            => new xmlrpcval(true, 'boolean'),
             'result_text'       => new xmlrpcval('', 'base64'),
             'user_id'           => new xmlrpcval($mybb->user['uid'], 'string'),
             'username'          => new xmlrpcval(basic_clean($mybb->user['username']), 'base64'),
+        	'email'             => new xmlrpcval(basic_clean($mybb->user['email']), 'base64'),
             'icon_url'          => new xmlrpcval(absolute_url($mybb->user['avatar']), 'string'),
             'post_count'        => new xmlrpcval(intval($mybb->user['postnum']), 'int'),
             'usergroup_id'      => new xmlrpcval($xmlgroups, 'array'),
@@ -121,9 +130,10 @@ function login_func($xmlrpc_params)
             'can_moderate'      => new xmlrpcval($mybb->usergroup['canmodcp'] == 1, "boolean"),
             'can_search'        => new xmlrpcval($mybb->usergroup['cansearch'] == 1, "boolean"),
             'can_whosonline'    => new xmlrpcval($mybb->usergroup['canviewonline'] == 1, "boolean"),
+        	'push_type'         => new xmlrpcval($push_type, 'array'),
         );
         
-        if ($input['push']) update_push();
+        
         
         return new xmlrpcresp(new xmlrpcval($result, 'struct'));
     }
