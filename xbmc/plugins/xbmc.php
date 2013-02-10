@@ -208,6 +208,13 @@ function xbmc_SendPrivateMessageFormEnd() {
 function xbmc_PreOutputPage($content) {
 	global $lang, $templates, $mybb, $privatemessage_text, $theme, $modcplink, $admincplink;
 
+	// send correct headers if forum is turned off
+	if ($mybb->settings['boardclosed']) {
+		header('Status: 503 Service Unavailable');
+		header('HTTP/1.0 503 Service Unavailable');
+		header('Retry-After: 3600');
+	}
+
 	// add conditional HTML5 compaint <head>-Tag
 	$tagAttributes = '';
 	$replaceTag = '<html';
