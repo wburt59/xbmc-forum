@@ -29,8 +29,11 @@ $plugins->add_hook("editpost_action_start", "xbmc_CleanupIncomingMessage");
 $plugins->add_hook("newreply_do_newreply_start", "xbmc_CleanupIncomingMessage");
 $plugins->add_hook("newreply_start", "xbmc_CleanupIncomingMessage");
 $plugins->add_hook("newthread_do_newthread_start", "xbmc_CleanupIncomingMessage");
+# cleanup user signatures
 $plugins->add_hook("usercp_editsig_start", "xbmc_CleanupSignature");
 $plugins->add_hook("usercp_do_editsig_start", "xbmc_CleanupSignature");
+$plugins->add_hook("modcp_editprofile_start", "xbmc_CleanupSignature");
+$plugins->add_hook("modcp_do_editprofile_start", "xbmc_CleanupSignature");
 
 $plugins->add_hook("datahandler_post_insert_post", "xbmc_CleanupPostBeforeInsert");
 $plugins->add_hook("datahandler_post_update", "xbmc_CleanupPostBeforeInsert");
