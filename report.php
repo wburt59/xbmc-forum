@@ -93,7 +93,7 @@ elseif($mybb->input['action'] == "do_report" && $mybb->request_method == "post")
 				case "pgsql":
 				case "sqlite":
 					$query = $db->query("
-						SELECT u.username, u.email, u.receivepms, u.uid
+						SELECT DISTINCT u.username, u.email, u.receivepms, u.uid
 						FROM ".TABLE_PREFIX."users u
 						LEFT JOIN ".TABLE_PREFIX."usergroups g ON (((','|| u.additionalgroups|| ',' LIKE '%,'|| g.gid|| ',%') OR u.usergroup = g.gid))
 						WHERE (g.cancp=1 OR g.issupermod=1)
@@ -101,7 +101,7 @@ elseif($mybb->input['action'] == "do_report" && $mybb->request_method == "post")
 					break;
 				default:
 					$query = $db->query("
-						SELECT u.username, u.email, u.receivepms, u.uid
+						SELECT DISTINCT u.username, u.email, u.receivepms, u.uid
 						FROM ".TABLE_PREFIX."users u
 						LEFT JOIN ".TABLE_PREFIX."usergroups g ON (((CONCAT(',', u.additionalgroups, ',') LIKE CONCAT('%,', g.gid, ',%')) OR u.usergroup = g.gid))
 						WHERE (g.cancp=1 OR g.issupermod=1)
