@@ -66,7 +66,7 @@ function xbmc_info()
 		"description"	=> "This plugins contains XBMC specific changes and features for this forum",
 		"website"		=> "http://xbmc.org",
 		"author"			=> "Team XBMC",
-		"authorsite"	=> "http://xbmc.or",
+		"authorsite"	=> "http://xbmc.org",
 		"version"		=> "0.41",
 		"guid" 			=> "",
 		"compatibility" => "*"
