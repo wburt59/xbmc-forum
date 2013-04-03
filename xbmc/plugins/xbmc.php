@@ -40,6 +40,7 @@ $plugins->add_hook("datahandler_post_update", "xbmc_CleanupPostBeforeInsert");
 $plugins->add_hook("datahandler_post_insert_thread_post", "xbmc_CleanupPostBeforeInsert");
 
 $plugins->add_hook("mycode_add_codebuttons", "xbmc_AddMybbCodeButtons");
+$plugins->add_hook("upload_avatar_end", "xbmc_fixAvatarUploadPath");
 
 
 /**
@@ -66,7 +67,7 @@ function xbmc_info()
 		"website"		=> "http://xbmc.org",
 		"author"			=> "Team XBMC",
 		"authorsite"	=> "http://xbmc.or",
-		"version"		=> "0.4",
+		"version"		=> "0.41",
 		"guid" 			=> "",
 		"compatibility" => "*"
 	);
@@ -126,6 +127,48 @@ function xbmc_info()
  * }
  */
 
+
+/**
+ * Activate routine
+ *
+ *@return void
+ */
+function xbmc_activate() {
+	global $db, $mybb, $lang;
+	
+	// settings groupID of "user registration and profile options"
+	$groupId = 9;
+
+	// add signatureuploadpath to settings
+	$query = $db->simple_select('settings', 'name', 'name="signatureuploadpath"');
+	if (!$query || !$db->fetch_field($query, 'name')) {
+		$insertarray = array(
+			'name' => 'signatureuploadpath',
+			'title' => 'XBMC: Signature upload path',
+			'description' => 'Path where signatures are stored',
+			'optionscode' => 'text',
+			'value' => '',
+			'disporder' => 0,
+			'gid' => $groupId
+		);
+		$db->insert_query("settings", $insertarray);
+	}
+
+	// add avatardisplaypath to settings
+	$query = $db->simple_select('settings', 'name', 'name="avatardisplaypath"');
+	if (!$query || !$db->fetch_field($query, 'name')) {
+		$insertarray = array(
+			'name' => 'avatardisplaypath',
+			'title' => 'XBMC: Avatar display path',
+			'description' => 'If set, this path is used to create the display URL for avatars. This is useful if your upload path is outside of the website root but you use an server alias to grant read access for it.',
+			'optionscode' => 'text',
+			'value' => './uploads/avatars',
+			'disporder' => 30,
+			'gid' => $groupId
+		);
+		$db->insert_query("settings", $insertarray);
+	}
+}
 
 /**
  * Is triggered after basic myBB initialization and prepares and injects
@@ -373,6 +416,20 @@ function xbmc_AddMybbCodeButtons(array $languageStrings) {
 		'editor_enter_imgur'
 	);
 	return array_merge($languageStrings, $customStrings);
+}
+
+/**
+ * Fixes the file path of uploaded avatars
+ * 
+ * @param array $avatarSettings
+ * @return array The modified avatar settings
+ */
+function xbmc_fixAvatarUploadPath(array $avatarSettings) {
+	global $mybb;
+	if ($avatarSettings['avatar'] && $mybb->settings['avatardisplaypath']) {
+		$avatarSettings['avatar'] = str_replace($mybb->settings['avataruploadpath'], $mybb->settings['avatardisplaypath'], $avatarSettings['avatar']);
+	}
+	return $avatarSettings;
 }
 
 /**
