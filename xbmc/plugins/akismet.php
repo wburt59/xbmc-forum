@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id: akismet.php 5297 2010-12-28 22:01:14Z Tomm $
+ * $Id$
  */
 
 // Disallow direct access to this file for security reasons
@@ -202,7 +202,7 @@ function akismet_install()
 		'description' => 'Forums, separated by a comma, to ignore. Use the forum id, <strong>not the name</strong>.',
 		'optionscode' => 'text',
 		'value' => '',
-		'disporder' => 4,
+		'disporder' => 3,
 		'gid' => $group['gid']
 	);
 	$db->insert_query("settings", $insertarray);
@@ -212,8 +212,8 @@ function akismet_install()
 		'title' => 'Usergroups to Ignore',
 		'description' => 'Usergroups, separated by a comma, to ignore. Use the usergroup id, <strong>not the name</strong>.',
 		'optionscode' => 'text',
-		'value' => '6,4,3,8',
-		'disporder' => 5,
+		'value' => '6,4,3',
+		'disporder' => 4,
 		'gid' => $group['gid']
 	);
 	$db->insert_query("settings", $insertarray);
@@ -570,11 +570,11 @@ function akismet_moderation_start()
 	
 	if($snippit == "thread")
 	{
-		redirect("./forumdisplay.php?fid={$post['fid']}", $lang->thread_spam_success);
+		redirect(get_forum_link($post['fid']), $lang->thread_spam_success);
 	}
 	else
 	{
-		redirect("./showthread.php?tid={$post['tid']}", $lang->post_spam_success);
+		redirect(get_thread_link($post['tid']), $lang->post_spam_success);
 	}
 }
 
@@ -1105,7 +1105,7 @@ function akismet_admin()
 			}
 			
 			$table->construct_cell($form->generate_check_box("akismet[{$post['pid']}]", 1, ''));
-			$table->construct_cell("<span style=\"float: right;\">{$lang->username}: {$username}</span> <span style=\"float: left;\">{$lang->title}: ".htmlspecialchars_uni($post['subject'])." <strong>(".my_date($mybb->settings['dateformat'], $post['dateline']).", ".my_date($mybb->settings['timeformat'], $post['dateline']).")</strong></span>");
+			$table->construct_cell("<span style=\"float: right;\">{$lang->username} {$username}</span> <span style=\"float: left;\">{$lang->title}: ".htmlspecialchars_uni($post['subject'])." <strong>(".my_date($mybb->settings['dateformat'], $post['dateline']).", ".my_date($mybb->settings['timeformat'], $post['dateline']).")</strong></span>");
 			$table->construct_row();
 			
 			$parser_options = array(
@@ -1432,7 +1432,7 @@ class Akismet {
 			$http_request .= "Host: {$api_key}{$this->host}\r\n";
 			$http_request .= "Content-Type: application/x-www-form-urlencoded; charset=UTF-8\r\n";
 			$http_request .= "Content-Length: ".strlen($request)."\r\n";
-			$http_request .= "User-Agent: MyBB/1.4 | Akismet/1.1\r\n";
+			$http_request .= "User-Agent: MyBB/1.6 | Akismet/1.1\r\n";
 			$http_request .= "Connection: close\r\n";
 			$http_request .= "\r\n";
 			$http_request .= $request;

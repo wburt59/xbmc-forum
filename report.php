@@ -12,7 +12,7 @@
 define("IN_MYBB", 1);
 define('THIS_SCRIPT', 'report.php');
 
-$templatelist = "report,email_reportpost,emailsubject_reportpost,report_thanks";
+$templatelist = "report,report_thanks,report_error,report_noreason,forumdisplay_password_wrongpass,forumdisplay_password";
 require_once "./global.php";
 
 // Load global language phrases
@@ -93,7 +93,7 @@ elseif($mybb->input['action'] == "do_report" && $mybb->request_method == "post")
 				case "pgsql":
 				case "sqlite":
 					$query = $db->query("
-						SELECT DISTINCT u.username, u.email, u.receivepms, u.uid
+						SELECT u.username, u.email, u.receivepms, u.uid
 						FROM ".TABLE_PREFIX."users u
 						LEFT JOIN ".TABLE_PREFIX."usergroups g ON (((','|| u.additionalgroups|| ',' LIKE '%,'|| g.gid|| ',%') OR u.usergroup = g.gid))
 						WHERE (g.cancp=1 OR g.issupermod=1)
@@ -101,7 +101,7 @@ elseif($mybb->input['action'] == "do_report" && $mybb->request_method == "post")
 					break;
 				default:
 					$query = $db->query("
-						SELECT DISTINCT u.username, u.email, u.receivepms, u.uid
+						SELECT u.username, u.email, u.receivepms, u.uid
 						FROM ".TABLE_PREFIX."users u
 						LEFT JOIN ".TABLE_PREFIX."usergroups g ON (((CONCAT(',', u.additionalgroups, ',') LIKE CONCAT('%,', g.gid, ',%')) OR u.usergroup = g.gid))
 						WHERE (g.cancp=1 OR g.issupermod=1)
