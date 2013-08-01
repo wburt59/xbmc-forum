@@ -141,9 +141,9 @@ function reply_post_func($xmlrpc_params)
 	
 	// Set up the post options from the input.
 	$post['options'] = array(
-		"signature" => $mybb->user['signature'],
+		"signature" => 1,
 		"subscriptionmethod" => $mybb->user['subscriptionmethod'] == 0 ? '':$mybb->user['subscriptionmethod'],
-		"disablesmilies" => $forum['allowsmilies']
+		"disablesmilies" => 0
 	);
 	$post['modoptions']['stickthread'] = $thread['sticky'];
 	$post['modoptions']['closethread'] = $thread['close'];
@@ -190,9 +190,9 @@ function reply_post_func($xmlrpc_params)
 			$state = 1;
 		}
 	}
-
 	$pid = intval($pid);
-	$db->update_query("attachments", array("pid" => $pid), "posthash='{$input['group_id_esc']}'");
+	if(!empty($input['group_id_esc']))
+		$db->update_query("attachments", array("pid" => $pid), "posthash='{$input['group_id_esc']}'");
 
 	// update thread attachment account
 	if (count($input['attachment_id_array']) > 0)

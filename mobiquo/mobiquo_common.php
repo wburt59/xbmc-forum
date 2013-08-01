@@ -347,13 +347,33 @@ function cutstr($string, $length)
 
 function process_short_content($post_text, $parser = null, $length = 200)
 {
-    global $parser;
+	global $parser,$mybb;
+	
+	require_once MYBB_ROOT.$mybb->settings['tapatalk_directory'].'/emoji/emoji.class.php';
+	$post_text = tapatalkEmoji::covertNameToEmpty($post_text);
     
     if($parser === null) {
         require_once MYBB_ROOT."inc/class_parser.php";
         $parser = new postParser;
     }
-
+	$array_reg = array(
+		array('reg' => '/\[color=(.*?)\](.*?)\[\/color\]/sei','replace' => "mobi_color_convert('$1','$2' ,false)"),
+		array('reg' => '/\[php\](.*?)\[\/php\]/si','replace' => '[php]'),
+		array('reg' => '/\[align=(.*?)\](.*?)\[\/align\]/si',replace=>" $2 "),
+		array('reg' => '/\[email\](.*?)\[\/email\]/si',replace=>"[url]"),
+		array('reg' => '/\[quote(.*?)\](.*?)\[\/quote\]/si','replace' => '[quote]'),
+		array('reg' => '/\[code\](.*?)\[\/code\]/si','replace' => ''),
+		array('reg' => '/\[url=(.*?)\](.*?)\[\/url\]/sei','replace' => "mobi_url_convert('$1','$2')"),
+		array('reg' => '/\[img\](.*?)\[\/img\]/si','replace' => '[img]'),
+		array('reg' => '/\[video=(.*?)\](.*?)\[\/video\]/si','replace' => '[V]'),
+		array('reg' => '/\[attachment=(.*?)\]/si','replace' => '[attach]'),
+	);
+	foreach ($array_reg as $arr)
+	{
+		$post_text = preg_replace($arr['reg'], $arr['replace'], $post_text);
+	}
+	//$post_text = tt_covert_list($post_text, '/\[list=1\](.*?)\[\/list\]/si', '2');
+	//$post_text = tt_covert_list($post_text, '/\[list\](.*?)\[\/list\]/si', '1');
     $parser_options = array(
         'allow_html' => 0,
         'allow_mycode' => 1,
@@ -369,15 +389,25 @@ function process_short_content($post_text, $parser = null, $length = 200)
     {
         $post_text = my_substr(trim($post_text), 0, $length);
     }
-    
-    //$post_text = str_replace("\xC2\xA0", " ", $post_text);
-    
     return $post_text;
 }
-
+function mobi_url_convert($a,$b)
+{
+	if(trim($a) == trim($b))
+	{
+		return '[url]';
+	}
+	else 
+	{
+		return $b;
+	}
+}
 function process_post($post, $returnHtml = false)
 {
 	global $mybb;
+	
+	require_once MYBB_ROOT.$mybb->settings['tapatalk_directory'].'/emoji/emoji.class.php';
+	$post = tapatalkEmoji::covertHtmlToEmoji($post);
     if($returnHtml){
         //$post = str_replace("&", '&amp;', $post);
         //$post = str_replace("<", '&lt;', $post);
@@ -391,7 +421,7 @@ function process_post($post, $returnHtml = false)
         $post = html_entity_decode($post, ENT_QUOTES, 'UTF-8');
         $post = str_replace('[hr]', "\n____________________________________\n", $post);
     }
-	
+	$post = str_replace("&#36;", '$', $post);
     $post = trim($post);
     // remove link on img
     $post = preg_replace('/\[url=[^\]]*?\]\s*(\[img\].*?\[\/img\])\s*\[\/url\]/si', '$1', $post);
@@ -788,7 +818,7 @@ function check_return_user_type($username)
  * @exmaple: getContentFromRemoteServer('http://push.tapatalk.com/push.php', 0, $error_msg, 'POST', $ttp_post_data)
  * @return string when get content successfully|false when the parameter is invalid or connection failed.
 */
-function getContentFromRemoteServer($url, $holdTime = 0, &$error_msg, $method = 'GET', $data = array())
+function getContentFromRemoteServer($url, $holdTime = 0, $error_msg='', $method = 'GET', $data = array())
 {
     //Validate input.
     $vurl = parse_url($url);
@@ -810,7 +840,7 @@ function getContentFromRemoteServer($url, $holdTime = 0, &$error_msg, $method = 
 
     if(!empty($holdTime) && function_exists('file_get_contents') && $method == 'GET')
     {
-        $response = file_get_contents($url);
+        $response = @file_get_contents($url);
     }
     else if (@ini_get('allow_url_fopen'))
     {
@@ -822,7 +852,7 @@ function getContentFromRemoteServer($url, $holdTime = 0, &$error_msg, $method = 
 
             if($method == 'POST')
             {
-                $fp = fsockopen($host, 80, $errno, $errstr, 5);
+                $fp = @fsockopen($host, 80, $errno, $errstr, 5);
 
                 if(!$fp)
                 {
@@ -839,6 +869,7 @@ function getContentFromRemoteServer($url, $holdTime = 0, &$error_msg, $method = 
                 fputs($fp, "Connection: close\r\n\r\n");
                 fputs($fp, $data);
                 fclose($fp);
+                return 1;
             }
             else
             {
@@ -854,6 +885,7 @@ function getContentFromRemoteServer($url, $holdTime = 0, &$error_msg, $method = 
                     'method' => 'POST',
                     'content' => http_build_query($data, '', '&'),
                 ));
+               
                 $ctx = stream_context_create($params);
                 $old = ini_set('default_socket_timeout', $holdTime);
                 $fp = @fopen($url, 'rb', false, $ctx);
@@ -897,6 +929,10 @@ function getContentFromRemoteServer($url, $holdTime = 0, &$error_msg, $method = 
         $error_msg = 'CURL is disabled and PHP option "allow_url_fopen" is OFF. You can enable CURL or turn on "allow_url_fopen" in php.ini to fix this problem.';
         return false;
     }
+    if(!empty($error_msg))
+    {
+    	return $error_msg;
+    }
     return $response;
 }
 
@@ -910,6 +946,10 @@ function tt_register_verify($tt_token,$tt_code)
 	$url = "http://directory.tapatalk.com/au_reg_verify.php?token=".$tt_token."&code=".$tt_code."&key=" . $mybb->settings['tapatalk_push_key'];
 	$error_msg = '';
 	$response = getContentFromRemoteServer($url, 10 , $error_msg);
+	if(empty($response))
+	{
+		$response = getContentFromRemoteServer($url, 0 , $error_msg);
+	}
 	if(!empty($error_msg))
 	{
 		$response = '{"result":false,"result_text":"Contect timeout , please try again"}';
@@ -930,4 +970,132 @@ function tt_get_user_push_type($userid)
     $result = $db->query($sql);
     $row = $db->fetch_array($result);
     return $row;
+}
+
+function tt_get_sforums($fids)
+{
+	global $db;
+	$fids_temp = array();
+	foreach($fids as $key => $fid)
+    {
+        $fid = intval($fid);
+    	switch($db->type)
+ 		{
+ 			case "pgsql":
+				$query = $db->simple_select("forums", "DISTINCT fid", "(','||parentlist||',' LIKE ',%{$fid}%,') = true AND active != 0");
+ 				break;
+ 			case "sqlite":
+				$query = $db->simple_select("forums", "DISTINCT fid", "(','||parentlist||',' LIKE ',%{$fid}%,') > 0 AND active != 0");
+ 				break;
+ 			default:
+				$query = $db->simple_select("forums", "DISTINCT fid", "INSTR(CONCAT(',',parentlist,','),',{$fid},') > 0 AND active != 0");
+ 		}
+        while($sforum = $db->fetch_array($query))
+        {
+            $fids_temp[] = $sforum['fid'];
+        }
+    }
+    $fids_temp = array_unique($fids_temp);
+    return $fids_temp;
+}
+
+function tt_get_user_by_email($email)
+{
+	global $mybb, $db;
+
+	$query = $db->simple_select("users", "*", "email = '".$db->escape_string($email)."'");
+	$user_info = $db->fetch_array($query);
+	if(empty($user_info))
+	{
+		return false;
+	}
+	return $user_info;
+}
+
+function tt_login_success()
+{
+	global $db, $lang, $theme, $plugins, $mybb, $session, $settings, $cache, $time, $mybbgroups, $mobiquo_config,$user;
+	if($user['coppauser'])
+    {
+		error($lang->error_awaitingcoppa);
+	}
+
+	my_setcookie('loginattempts', 1);
+	$db->delete_query("sessions", "ip='".$db->escape_string($session->ipaddress)."' AND sid != '".$session->sid."'");
+	$newsession = array(
+		"uid" => $user['uid'],
+	);
+	$db->update_query("sessions", $newsession, "sid='".$session->sid."'");
+
+	$db->update_query("users", array("loginattempts" => 1), "uid='{$user['uid']}'");
+
+	my_setcookie("mybbuser", $user['uid']."_".$user['loginkey'], null, true);
+	my_setcookie("sid", $session->sid, -1, true);
+
+	$mybb->cookies['sid'] = $session->sid;
+	$session = new session;
+	$session->init();
+
+	$mybbgroups = $mybb->user['usergroup'];
+	if($mybb->user['additionalgroups'])
+	{
+		$mybbgroups .= ','.$mybb->user['additionalgroups'];
+	}
+	$groups = explode(",", $mybbgroups);
+	$xmlgroups = array();
+	foreach($groups as $group){
+		$xmlgroups[] = new xmlrpcval($group, "string");
+	}
+	update_push();
+	if ($settings['maxattachments'] == 0) $settings['maxattachments'] = 100;
+	$push_type = array();
+	$userPushType = tt_get_user_push_type($mybb->user['uid']);
+	foreach ($userPushType as $name=>$value)
+	{
+		$push_type[] = new xmlrpcval(array(
+			'name'  => new xmlrpcval($name,'string'),
+			'value' => new xmlrpcval($value,'boolean'),                    
+			), 'struct');
+	}
+	$result = array(
+		'result'            => new xmlrpcval(true, 'boolean'),
+		'result_text'       => new xmlrpcval('', 'base64'),
+		'user_id'           => new xmlrpcval($mybb->user['uid'], 'string'),
+		'username'          => new xmlrpcval(basic_clean($mybb->user['username']), 'base64'),
+		'email'             => new xmlrpcval(basic_clean($mybb->user['email']), 'base64'),
+		'icon_url'          => new xmlrpcval(absolute_url($mybb->user['avatar']), 'string'),
+		'post_count'        => new xmlrpcval(intval($mybb->user['postnum']), 'int'),
+		'usergroup_id'      => new xmlrpcval($xmlgroups, 'array'),
+		'max_png_size'      => new xmlrpcval(10000000, "int"),
+		'max_jpg_size'      => new xmlrpcval(10000000, "int"),
+		'max_attachment'    => new xmlrpcval($mybb->usergroup['canpostattachments'] == 1 ? $settings['maxattachments'] : 0, "int"),
+		'can_upload_avatar' => new xmlrpcval($mybb->usergroup['canuploadavatars'] == 1, "boolean"),
+		'can_pm'            => new xmlrpcval($mybb->usergroup['canusepms'] == 1 && !$mobiquo_config['disable_pm'], "boolean"),
+		'can_send_pm'       => new xmlrpcval($mybb->usergroup['cansendpms'] == 1 && !$mobiquo_config['disable_pm'], "boolean"),
+		'can_moderate'      => new xmlrpcval($mybb->usergroup['canmodcp'] == 1, "boolean"),
+		'can_search'        => new xmlrpcval($mybb->usergroup['cansearch'] == 1, "boolean"),
+		'can_whosonline'    => new xmlrpcval($mybb->usergroup['canviewonline'] == 1, "boolean"),
+		'push_type'         => new xmlrpcval($push_type, 'array'),
+	);
+	
+	
+	
+	return new xmlrpcresp(new xmlrpcval($result, 'struct'));
+}
+
+function update_push()
+{
+    global $mybb, $db;
+    
+    $uid = $mybb->user['uid'];
+    
+    if ($uid && $db->table_exists('tapatalk_users'))
+    {
+        $db->write_query("INSERT IGNORE INTO " . TABLE_PREFIX . "tapatalk_users (userid) VALUES ('$uid')", 1);
+        
+        if ($db->affected_rows() == 0)
+        {
+            $db->write_query("UPDATE " . TABLE_PREFIX . "tapatalk_users SET updated = CURRENT_TIMESTAMP WHERE userid = '$uid'", 1);
+        }
+    }
 }

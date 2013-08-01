@@ -1,0 +1,25 @@
+ inc/plugins/tapatalk.php | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/inc/plugins/tapatalk.php b/inc/plugins/tapatalk.php
+index 1186409..b3268c9 100644
+--- a/inc/plugins/tapatalk.php
++++ b/inc/plugins/tapatalk.php
+@@ -538,6 +538,9 @@ function tapatalk_pre_output_page(&$page)
+     global $mybb;
+     $settings = $mybb->settings;
+ 	
++    $app_banner_message = $settings['tapatalk_app_banner_msg'];
++    if (!$app_banner_message) return;
++
+     $app_forum_name = $settings['homename'];
+     $board_url = $mybb->settings['bburl'];
+     $tapatalk_dir = $mybb->settings['tapatalk_directory'];  // default as 'mobiquo'
+@@ -545,7 +548,6 @@ function tapatalk_pre_output_page(&$page)
+     $is_mobile_skin = 0;
+     $app_location_url = tapatalk_get_url();
+     
+-    $app_banner_message = $settings['tapatalk_app_banner_msg'];
+     $app_ios_id = $settings['tapatalk_app_ios_id'];
+     $app_android_id = $settings['tapatalk_android_url'];
+     $app_kindle_url = $settings['tapatalk_kindle_url'];

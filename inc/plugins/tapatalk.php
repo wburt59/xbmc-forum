@@ -21,7 +21,10 @@ $plugins->add_hook('newthread_do_newthread_end', 'tapatalk_push_quote');
 $plugins->add_hook('newthread_do_newthread_end', 'tapatalk_push_tag');
 $plugins->add_hook('online_user','tapatalk_online_user');
 $plugins->add_hook('online_end','tapatalk_online_end');
-
+$plugins->add_hook('postbit','tapatalk_postbit');
+$plugins->add_hook('postbit_prev','tapatalk_postbit');
+$plugins->add_hook('postbit_pm','tapatalk_postbit');
+$plugins->add_hook('postbit_announcement','tapatalk_postbit');
 function tapatalk_info()
 {
     /**
@@ -41,7 +44,7 @@ function tapatalk_info()
         "website"       => "http://tapatalk.com",
         "author"        => "Quoord Systems Limited",
         "authorsite"    => "http://tapatalk.com",
-        "version"       => "3.3.3",
+        "version"       => "3.5.0",
         "guid"          => "e7695283efec9a38b54d8656710bf92e",
         "compatibility" => "16*"
     );
@@ -49,7 +52,7 @@ function tapatalk_info()
 
 function tapatalk_install()
 {
-    global $db;
+    global $db,$mybb;
 
     tapatalk_uninstall();
     if(!$db->table_exists('tapatalk_users'))
@@ -91,13 +94,22 @@ function tapatalk_install()
 
     $setting_group = array(
         'name'          =>    'tapatalk',
-        'title'         =>    'Tapatalk Options',
+        'title'         =>    'Tapatalk General Options',
         'description'   =>    'Optional Tapatalk Settings allow you to fine-tune the app behaviour with the forum',
+        'disporder'     =>    0,
+        'isdefault'     =>    0
+    );
+    $setting_byo_group = array(
+    	'name'          =>    'tapatalk_byo',
+        'title'         =>    'Tapatalk BYO Options',
+        'description'   =>    'Tapatalk - Build Your Own - Options',
         'disporder'     =>    0,
         'isdefault'     =>    0
     );
     $db->insert_query('settinggroups', $setting_group);
     $gid = $db->insert_id();
+    $db->insert_query('settinggroups', $setting_byo_group);
+    $gid_byo = $db->insert_id();
 
     $settings = array(
         'enable' => array(
@@ -160,63 +172,41 @@ function tapatalk_install()
             'optionscode'   => 'textarea',
             'value'         => ''
         ),
-        'app_name'    => array(
-            'title'         => 'App Name',
-            'description'   => 'Please limit this name to within 20 characters .',
-            'optionscode'   => 'text',
-            'value'         => 'Tapatalk Forum App'
+        
+        'push_slug' => array(
+        	'title'         => '',
+            'description'   => '',
+            'optionscode'   => 'php',
+            'value'         => '0',
+        )
+    );
+	
+    $settings_byo = array(
+    	'app_banner_msg'    => array(
+            'title'         => 'BYO App Banner Message',
+            'description'   => 'E.g. "Follow {your_forum_name} with {app_name} for [os_platform]". Do not change the [os_platform] tag as it is displayed dynamically based on user\'s device platform.',
+            'optionscode'   => 'textarea',
+            'value'         => ''
         ),  
-        'app_desc'    => array(
-            'title'         => 'App Description',
-            'description'   => 'A short description of the product, ideally within five words. Less is better for small screen.',
+        'app_ios_id'    => array(
+            'title'         => 'BYO iOS App ID',
+            'description'   => 'Enter your BYO product ID in Apple App Store, to be used on iOS device.',
             'optionscode'   => 'text',
-            'value'         => 'App for this forum'
+            'value'         => ''
         ), 
-        'app_icon_url'    => array(
-            'title'         => 'App Icon URL',
-            'description'   => 'Icon URL to be loaded and displayed on Smart App Banner .',
+        'android_url'    => array(
+            'title'         => 'Android Product ID',
+            'description'   => 'Enter your BYO App ID from Google Play, to be used on Android device. E.g. "com.quoord.tapatalkpro.activity".',
             'optionscode'   => 'text',
-            'value'         => 'mobiquo/smartbanner/tapatalk2.png'
+            'value'         => ''
         ),   
-        'ipad_id' => array(
-            'title'         => 'iPad App ID',
-            'description'   => 'Enter your product ID in Apple App Store, to be used on iPad device .Default 481579541',
-            'optionscode'   => 'text',
-            'value'         => '481579541',
-        ),        
-        'iphone_id' => array(
-            'title'         => 'iPhone App ID',
-            'description'   => 'Enter your product ID in Apple App Store, to be used on iPhone device . Default 307880732',
-            'optionscode'   => 'text',
-            'value'         => '307880732',
-        ),
-        'android_url' => array(
-            'title'         => 'Android (Phone) URL',
-            'description'   => 'Google Play URL for Android Phone. Default "market://details?id=com.quoord.tapatalkpro.activity"',
-            'optionscode'   => 'text',
-            'value'         => 'market://details?id=com.quoord.tapatalkpro.activity',
-        ),
-        'android_hd_url' => array(
-            'title'         => 'Android (Tablet) URL',
-            'description'   => 'Google Play URL for Android tablets. Default "market://details?id=com.quoord.tapatalkHD"',
-            'optionscode'   => 'text',
-            'value'         => 'market://details?id=com.quoord.tapatalkHD',
-        ),
         'kindle_url' => array(
             'title'         => 'Kindle Fire (Original) URL',
-            'description'   => 'Amazon App Store URL for Kindle Fire. Default "http://www.amazon.com/gp/mas/dl/android?p=com.quoord.tapatalkpro.activity"',
+            'description'   => 'Enter your BYO App URL from Amazon App Store, to be used on Kindle Fire device.',
             'optionscode'   => 'text',
-            'value'         => 'http://www.amazon.com/gp/mas/dl/android?p=com.quoord.tapatalkpro.activity',
-        ),
-        
-        'kindle_hd_url' => array(
-            'title'         => 'Kindle Fire HD URL',
-            'description'   => 'Amazon App Store URL for Kindle Fire HD. Default "http://www.amazon.com/gp/mas/dl/android?p=com.quoord.tapatalkpro.activity"',
-            'optionscode'   => 'text',
-            'value'         => 'http://www.amazon.com/gp/mas/dl/android?p=com.quoord.tapatalkHD',
+            'value'         => '',
         ),
     );
-
     $s_index = 0;
     foreach($settings as $name => $setting)
     {
@@ -229,6 +219,22 @@ function tapatalk_install()
             'value'       => $db->escape_string($setting['value']),
             'disporder'   => $s_index,
             'gid'         => $gid,
+            'isdefault'   => 0
+        );
+        $db->insert_query('settings', $insert_settings);
+    }
+	$s_index = 0;
+    foreach($settings_byo as $name => $setting)
+    {
+        $s_index++;
+        $insert_settings = array(
+            'name'        => $db->escape_string('tapatalk_'.$name),
+            'title'       => $db->escape_string($setting['title']),
+            'description' => $db->escape_string($setting['description']),
+            'optionscode' => $db->escape_string($setting['optionscode']),
+            'value'       => $db->escape_string($setting['value']),
+            'disporder'   => $s_index,
+            'gid'         => $gid_byo,
             'isdefault'   => 0
         );
         $db->insert_query('settings', $insert_settings);
@@ -268,6 +274,16 @@ function tapatalk_uninstall()
         $db->delete_query('settings', "gid='{$group['gid']}'");
         rebuild_settings();
     }
+	// Remove byo settings
+    $result = $db->simple_select('settinggroups', 'gid', "name = 'tapatalk_byo'", array('limit' => 1));
+    $group = $db->fetch_array($result);
+
+    if(!empty($group['gid']))
+    {
+        $db->delete_query('settinggroups', "gid='{$group['gid']}'");
+        $db->delete_query('settings', "gid='{$group['gid']}'");
+        rebuild_settings();
+    }
 }
 
 /*
@@ -286,6 +302,10 @@ function tapatalk_deactivate()
 
 function tapatalk_error($error)
 {
+	if(!strstr($_SERVER['PHP_SELF'],'mobiquo.php'))
+	{
+		return ;		
+	}
     if(defined('IN_MOBIQUO'))
     {
         global $lang, $include_topic_num, $search, $function_file_name;
@@ -331,6 +351,10 @@ function tapatalk_error($error)
 
 function tapatalk_redirect($args)
 {
+	if(!strstr($_SERVER['PHP_SELF'],'mobiquo.php'))
+	{
+		return ;		
+	}
     tapatalk_error($args['message']);
 }
 
@@ -478,8 +502,11 @@ function tapatalk_fetch_wol_activity_end(&$user_activity)
 function tapatalk_online_user()
 {
     global $user;
-    
-    if(strpos($user['location'], 'mobiquo') !== false)
+    if((strpos($user['location'], 'mobiquo') !== false) && (strpos($user['location'], 'BYO') !== false))
+    {
+    	 $user['username'] = $user['username'] . '[tapatalk_byo_user]';
+    }
+	else if(strpos($user['location'], 'mobiquo') !== false)
     {
         $user['username'] = $user['username'] . '[tapatalk_user]';
     }
@@ -489,51 +516,61 @@ function tapatalk_online_end()
 {
     global $online_rows,$mybb;
     $temp_online = $online_rows;
-    $str = '&nbsp;<a title="Using Tapatalk" href="http://www.tapatalk.com" target="_blank" ><img src="'.$mybb->settings['bburl'].'/'.$mybb->settings['tapatalk_directory'].'/images/tapatalk-online.png" style="vertical-align:middle"></a>';
-    $online_rows = preg_replace('/<a href="(.*)">(.*)\[tapatalk_user\](<\/em><\/strong><\/span>|<\/strong><\/span>|<\/span>|\s*)<\/a>/Usi', '<a href="$1">$2$3</a>'.$str, $online_rows);
-    if(empty($online_rows))
+    
+    $str = '&nbsp;<a title="On Tapatalk" href="http://www.tapatalk.com" target="_blank" ><img src="'.$mybb->settings['bburl'].'/'.$mybb->settings['tapatalk_directory'].'/images/tapatalk-online.png" style="vertical-align:middle"></a>';
+    $online_rows = preg_replace('/<a href="(.*)">(.*)\[tapatalk_user\](<\/em><\/strong><\/span>|<\/strong><\/span>|<\/span>|<\/b><\/span>|\s*)<\/a>/Usi', '<a href="$1">$2$3</a>'.$str, $online_rows);
+	if(empty($online_rows))
     {
         $online_rows = str_replace('[tapatalk_user]','',$temp_online);
     }
+    $temp_online = $online_rows;
+    $str_byo =  '&nbsp;<a title="Own app of this forum" href="http://www.tapatalk.com" target="_blank" ><img src="'.$mybb->settings['bburl'].'/'.$mybb->settings['tapatalk_directory'].'/images/byo-online.png" style="vertical-align:middle"></a>';
+    $online_rows = preg_replace('/<a href="(.*)">(.*)\[tapatalk_byo_user\](<\/em><\/strong><\/span>|<\/strong><\/span>|<\/span>|<\/b><\/span>|\s*)<\/a>/Usi', '<a href="$1">$2$3</a>'.$str_byo, $online_rows);
+	if(empty($online_rows))
+    {
+        $online_rows = str_replace('[tapatalk_byo_user]','',$temp_online);
+    }
+    
 }
 
 function tapatalk_pre_output_page(&$page)
 {
     global $mybb;
     $settings = $mybb->settings;
-    if(empty($settings['tapatalk_app_name']))
-    {
-    	return ;
-    }
-	$url = tapatalk_get_url();
-	$icon_url = $mybb->settings['tapatalk_app_icon_url'];
-	$jquery_url = $mybb->settings['bburl'].'/'.$mybb->settings['tapatalk_directory'].'/smartbanner/jquery-1.7.min.js';
-	$smartbanner_url = $mybb->settings['bburl'].'/'.$mybb->settings['tapatalk_directory'].'/smartbanner/jquery.smartbanner.js';	
-    $str = '<!-- Tapatalk smart banner head start -->   
-<link rel="stylesheet" href="'.$mybb->settings['bburl'].'/'.$mybb->settings['tapatalk_directory'].'/smartbanner/jquery.smartbanner.css" type="text/css" media="screen"> 
-<!-- Tapatalk smart banner head end-->'.
-"
-<script type='text/javascript'> 
-        var app_name = '".addslashes(substr($settings['tapatalk_app_name'],0,20))."';
-		var app_desc = '".addslashes($settings['tapatalk_app_desc'])."';
-		var app_icon_url = '{$icon_url}';
-		var app_iphone_id = '{$settings['tapatalk_iphone_id']}';
-		var app_ipad_id = '{$settings['tapatalk_ipad_id']}';
-		var app_android_url = '{$settings['tapatalk_android_url']}';
-		var app_android_hd_url = '{$settings['tapatalk_android_hd_url']}';
-		var app_kindle_url = '{$settings['tapatalk_kindle_url']}';
-		var app_kindle_hd_url = '{$settings['tapatalk_kindle_hd_url']}';
-        var app_location_url = '{$url}';       		
-</script>\n";
+	
+    $app_banner_message = $settings['tapatalk_app_banner_msg'];
+    if (!$app_banner_message) return;
+
+    $app_forum_name = $settings['homename'];
+    $board_url = $mybb->settings['bburl'];
+    $tapatalk_dir = $mybb->settings['tapatalk_directory'];  // default as 'mobiquo'
+    $tapatalk_dir_url = $board_url.'/'.$tapatalk_dir;
+    $is_mobile_skin = 0;
+    $app_location_url = tapatalk_get_url();
+    
+    $app_ios_id = $settings['tapatalk_app_ios_id'];
+    $app_android_id = $settings['tapatalk_android_url'];
+    $app_kindle_url = $settings['tapatalk_kindle_url'];
+    
+    if (file_exists(MYBB_ROOT.$tapatalk_dir . '/smartbanner/head.inc.php'))
+        include(MYBB_ROOT.$tapatalk_dir . '/smartbanner/head.inc.php');
+	
+    $str = $app_head_include;
     $tapatalk_smart_banner_body = " 
     <!-- Tapatalk smart banner body start --> \n".
-    '<script type="text/javascript" src="'.$jquery_url.'"></script>'."\n".
-    '<script type="text/javascript" src="'.$smartbanner_url.'"></script>'."\n".' 
+    '<script type="text/javascript">tapatalkDetect()</script>'."\n".' 
     <!-- Tapatalk smart banner body end --> ';
     $page = str_ireplace("</head>", $str . "\n</head>", $page);
-    $page = str_ireplace("<body>", "<body>\n".$tapatalk_smart_banner_body, $page);
+    $page = preg_replace("/<body>/isU", "<body>\n".$tapatalk_smart_banner_body, $page,1);
 }
-
+function tapatalk_postbit(&$post)
+{
+	global $mybb;
+	require_once MYBB_ROOT.$mybb->settings['tapatalk_directory'].'/emoji/emoji.php';
+	$post['message'] = emoji_name_to_unified($post['message']);
+	$post['message'] = emoji_unified_to_html($post['message']);
+	return $post;
+}
 function tapatalk_get_url()
 {
     global $mybb;
@@ -692,7 +729,7 @@ function tapatalk_push_quote()
             $query = $db->query("SELECT tu.*,u.uid FROM " . TABLE_PREFIX . "tapatalk_users AS tu LEFT JOIN
             " . TABLE_PREFIX ."users AS u ON tu.userid = u.uid  WHERE u.username = '$username'");
             $user = $db->fetch_array($query);
-            if(empty($user) || !tapatalk_double_push_check($user['uid'],$pid))
+            if(empty($user))
             {
                 return false;
             }
@@ -750,9 +787,10 @@ function tapatalk_push_tag()
             $query = $db->query("SELECT tu.*,u.uid FROM " . TABLE_PREFIX . "tapatalk_users AS tu LEFT JOIN
             " . TABLE_PREFIX ."users AS u ON tu.userid = u.uid  WHERE u.username = '$username'");
             $user = $db->fetch_array($query);
-            if(empty($user) || !tapatalk_double_push_check($user['uid'],$pid))
+            
+            if(empty($user))
             {
-                return false;
+                continue;
             }
             if ($user['uid'] == $mybb->user['uid']) continue;
             $ttp_push_data = array();
@@ -766,7 +804,7 @@ function tapatalk_push_tag()
                 'dateline'  => TIME_NOW,
             );
             tt_insert_push_data($ttp_data[count($ttp_data)-1]);
-            if($user['quote'] == 1)
+            if($user['tag'] == 1)
             {
                 $ttp_push_data[] = $ttp_data[count($ttp_data)-1];
             }
@@ -777,7 +815,7 @@ function tapatalk_push_tag()
                 'url'  => $mybb->settings['bburl'],
                 'data' => base64_encode(serialize($ttp_push_data)),
             );
-
+			
             $return_status = tt_do_post_request($ttp_post_data);
             return true;
         }
@@ -794,8 +832,9 @@ function tapatalk_push_newtopic()
     {
         return false;
     }
+    
     $query = $db->query("
-        SELECT ts.uid,tu.newtopic as sub
+        SELECT ts.uid,tu.newtopic as newtopic
         FROM ".TABLE_PREFIX."forumsubscriptions ts
         RIGHT JOIN ".TABLE_PREFIX."tapatalk_users tu ON (ts.uid=tu.userid)
         WHERE ts.fid = '$fid'
@@ -805,6 +844,7 @@ function tapatalk_push_newtopic()
     while($user = $db->fetch_array($query))
     {
         if ($user['uid'] == $mybb->user['uid']) continue;
+        
         $ttp_data[] = array(
             'userid'    => $user['uid'],
             'type'      => 'newtopic',
@@ -817,33 +857,22 @@ function tapatalk_push_newtopic()
         tt_insert_push_data($ttp_data[count($ttp_data)-1]);
         if($user['newtopic'] == 1)
         {
-            $ttp_push_data[] = $ttp_data[count($ttp_data)-1];
+        	$ttp_push_data[] = $ttp_data[count($ttp_data)-1];
         }
     }
     if(!empty($ttp_push_data) && $mybb->settings['tapatalk_push'])
     {
-        $ttp_post_data = array(
+    	$ttp_post_data = array(
             'url'  => $mybb->settings['bburl'],
             'data' => base64_encode(serialize($ttp_push_data)),
         );
-
+        
         $return_status = tt_do_post_request($ttp_post_data);
         return true;
     }
     return false;
 }
 
-function tapatalk_double_push_check($userid,$pid)
-{
-    global $db;
-    $query = $db->query("SELECT * FROM " . TABLE_PREFIX ."tapatalk_push_data WHERE user_id = '$userid' AND data_id = '$pid'");
-    $row = $db->fetch_array($query);
-    if(empty($row))
-    {
-        return true;
-    }
-    return false;
-}
 
 function tt_get_tag_list($str)
 {
@@ -863,7 +892,7 @@ function tt_get_tag_list($str)
 function tapatalk_push_pm()
 {
     global $mybb, $db, $pm, $pminfo;
-    if(!($pminfo['messagesent'] &&$db->table_exists('tapatalk_users')))
+    if(!($pminfo['messagesent'] && $db->table_exists('tapatalk_users')))
     {
         return false;
     }
@@ -873,12 +902,12 @@ function tapatalk_push_pm()
         LEFT JOIN ".TABLE_PREFIX."tapatalk_users tu ON (p.toid=tu.userid)
         WHERE p.fromid = '{$mybb->user['uid']}' and p.dateline = " . TIME_NOW . " AND p.folder = 1
     ");
-
+        
     $ttp_push_data = array();
     while($user = $db->fetch_array($query))
     {
         if ($user['toid'] == $mybb->user['uid']) continue;
-
+            
         $ttp_data[] = array(
             'userid'    => $user['toid'],
             'type'      => 'pm',
@@ -890,21 +919,23 @@ function tapatalk_push_pm()
         tt_insert_push_data($ttp_data[count($ttp_data)-1]);
         if($user['pm'] == 1)
         {
-            $ttp_push_data[] = $ttp_data[count($ttp_data)-1];
+        	$ttp_push_data[] = $ttp_data[count($ttp_data)-1];
         }
     }
+    
     if(!empty($ttp_push_data) && $mybb->settings['tapatalk_push'])
     {
         $ttp_post_data = array(
             'url'  => $mybb->settings['bburl'],
             'data' => base64_encode(serialize($ttp_push_data)),
         );
-
+        
         $return_status = tt_do_post_request($ttp_post_data);
     }
 }
 
-function tt_do_post_request($data,$pushTest = false)
+
+function tt_do_post_request($data,$is_test=false)
 {
     global $mybb;
     
@@ -913,99 +944,173 @@ function tt_do_post_request($data,$pushTest = false)
         return false;
     }
     
-    if(!empty($mybb->settings['tapatalk_push_key']) && !$pushTest)
+    if(!empty($mybb->settings['tapatalk_push_key']))
     {
         $data['key'] = $mybb->settings['tapatalk_push_key'];
     }
     
     $push_url = 'http://push.tapatalk.com/push.php';
-    $push_host = 'push.tapatalk.com';
-    $response = 'CURL is disabled and PHP option "allow_url_fopen" is OFF. You can enable CURL or turn on "allow_url_fopen" in php.ini to fix this problem.';
+    
+    //Get push_slug from db
+    $push_slug = !empty($mybb->settings['tapatalk_push_slug'])? $mybb->settings['tapatalk_push_slug'] : 0;
+    $slug = base64_decode($push_slug);
+    $slug = push_slug($slug, 'CHECK');
+    $check_res = unserialize($slug);
 
-    if (@ini_get('allow_url_fopen'))
+    //If it is valide(result = true) and it is not sticked, we try to send push
+    if($check_res['result'] && !$check_res['stick'])
     {
-        if(!$pushTest)
+        //Slug is initialed or just be cleared
+        if($check_res['save'])
         {
-            $fp = fsockopen($push_host, 80, $errno, $errstr, 5);
-
-            if(!$fp)
-                return false;
-
-            $data =  http_build_query($data,'', '&');
-            fputs($fp, "POST /push.php HTTP/1.1\r\n");
-            fputs($fp, "Host: $push_host\r\n");
-            fputs($fp, "Content-type: application/x-www-form-urlencoded\r\n");
-            fputs($fp, "Content-length: ". strlen($data) ."\r\n");
-            fputs($fp, "Connection: close\r\n\r\n");
-            fputs($fp, $data);
-            fclose($fp);
+            tt_update_settings(array('name' => 'tapatalk_push_slug', 'value' => base64_encode($slug)));
         }
-        else
+		if(!function_exists("getContentFromRemoteServer"))
+		{
+			define('IN_MOBIQUO', true);
+			require_once MYBB_ROOT.$mybb->settings['tapatalk_directory'].'/mobiquo_common.php';
+		}
+		if(isset($data['ip']) || isset($data['test']))
+		{
+			$hold_time = 10;
+		}
+		else 
+		{
+			$hold_time = 0;
+		}
+        //Send push
+        $push_resp = getContentFromRemoteServer($push_url, $hold_time, '', 'POST', $data);
+        if((trim($push_resp) === 'Invalid push notification key') && !$is_test)
         {
-            $params = array('http' => array(
-                'method' => 'POST',
-                'content' => http_build_query($data, '', '&'),
-            ));
-
-            $ctx = stream_context_create($params);
-            $timeout = 10;
-            $old = ini_set('default_socket_timeout', $timeout);
-            $fp = @fopen($push_url, 'rb', false, $ctx);
-
-            if (!$fp) return false;
-
-            ini_set('default_socket_timeout', $old);
-            stream_set_timeout($fp, $timeout);
-            stream_set_blocking($fp, 0);
-
-            $response = @stream_get_contents($fp);
+        	$push_resp = 1;
         }
+        if(!is_numeric($push_resp) && !$is_test)
+        {
+            //Sending push failed, try to update push_slug to db
+            $slug = push_slug($slug, 'UPDATE');
+            $update_res = unserialize($slug);
+            if($update_res['result'] && $update_res['save'])
+            {
+                tt_update_settings(array('name' => 'tapatalk_push_slug', 'value' => base64_encode($slug)));
+            }
+        }
+        
+        return $push_resp;
+    }
+    else 
+    {
+    	return 'stick ' . $check_res['stick'] . ' | result ' . $check_res['result'];
     }
     
-    elseif (function_exists('curl_init'))
-    {
-        $ch = curl_init($push_url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT,1);
-        $response = curl_exec($ch);
-        curl_close($ch);
-    }
-
-    return $response;
 }
 
+function push_slug($push_v, $method = 'NEW')
+{
+    if(empty($push_v))
+        $push_v = serialize(array());
+    $push_v_data = unserialize($push_v);
+    $current_time = time();
+    if(!is_array($push_v_data))
+        return serialize(array('result' => 0, 'result_text' => 'Invalid v data', 'stick' => 0));
+    if($method != 'CHECK' && $method != 'UPDATE' && $method != 'NEW')
+        return serialize(array('result' => 0, 'result_text' => 'Invalid method', 'stick' => 0));
+
+    if($method != 'NEW' && !empty($push_v_data))
+    {
+        $push_v_data['save'] = $method == 'UPDATE';
+        if($push_v_data['stick'] == 1)
+        {
+            if($push_v_data['stick_timestamp'] + $push_v_data['stick_time'] > $current_time)
+                return $push_v;
+            else
+                $method = 'NEW';
+        }
+    }
+
+    if($method == 'NEW' || empty($push_v_data))
+    {
+        $push_v_data = array();                       //Slug
+        $push_v_data['max_times'] = 3;                //max push failed attempt times in period
+        $push_v_data['max_times_in_period'] = 300;      //the limitation period
+        $push_v_data['result'] = 1;                   //indicate if the output is valid of not
+        $push_v_data['result_text'] = '';             //invalid reason
+        $push_v_data['stick_time_queue'] = array();   //failed attempt timestamps
+        $push_v_data['stick'] = 0;                    //indicate if push attempt is allowed
+        $push_v_data['stick_timestamp'] = 0;          //when did push be sticked
+        $push_v_data['stick_time'] = 600;             //how long will it be sticked
+        $push_v_data['save'] = 1;                     //indicate if you need to save the slug into db
+        return serialize($push_v_data);
+    }
+
+    if($method == 'UPDATE')
+    {
+        $push_v_data['stick_time_queue'][] = $current_time;
+    }
+    $sizeof_queue = count($push_v_data['stick_time_queue']);
+    $period_queue = $push_v_data['stick_time_queue'][$sizeof_queue - 1] - $push_v_data['stick_time_queue'][0];
+    $times_overflow = $sizeof_queue > $push_v_data['max_times'];
+    $period_overflow = $period_queue > $push_v_data['max_times_in_period'];
+
+    if($period_overflow)
+    {
+        if(!array_shift($push_v_data['stick_time_queue']))
+            $push_v_data['stick_time_queue'] = array();
+    }
+    
+    if($times_overflow && !$period_overflow)
+    {
+        $push_v_data['stick'] = 1;
+        $push_v_data['stick_timestamp'] = $current_time;
+    }
+
+    return serialize($push_v_data);
+}
 function tt_insert_push_data($data)
 {
-    global $mybb,$db;
-    if(!$db->table_exists("tapatalk_push_data"))
-    {
-        return ;
-    }
-    if($data['type'] == 'pm')
-    {
-        $data['subid'] = $data['id'];
-    }
-    $sql_data = array(
+	global $mybb,$db;
+	
+	if(!$db->table_exists("tapatalk_push_data"))
+	{
+		return ;
+	}
+	
+	//delete old data
+	$push_table = TABLE_PREFIX . "tapatalk_push_data";
+	$nowtime = time();
+    $monthtime = 30*24*60*60;
+    $preMonthtime = $nowtime-$monthtime;
+    $sql = 'DELETE FROM ' . $push_table . ' WHERE create_time < ' . $preMonthtime . ' and user_id = ' . $mybb->user['uid'];
+    $db->query($sql);
+    
+	if($data['type'] == 'pm')
+	{
+		$data['subid'] = $data['id'];
+	}
+	$sql_data = array(
         'author' => $data['author'],
-        'user_id' => $data['userid'],
-        'data_type' => $data['type'],
-        'title' => $data['title'],
-        'data_id' => $data['subid'],
-        'create_time' => $data['dateline']
+		'user_id' => $data['userid'],
+		'data_type' => $data['type'],
+		'title' => $data['title'],
+		'data_id' => $data['subid'],
+		'create_time' => $data['dateline']		
     );
-    $db->insert_query('tapatalk_push_data', $sql_data);
+	$db->insert_query('tapatalk_push_data', $sql_data);
 }
-
 function tt_push_clean($str)
 {
-    global $db;
+	global $db;
     $str = strip_tags($str);
     $str = trim($str);
     $str = html_entity_decode($str, ENT_QUOTES, 'UTF-8');
     $str = $db->escape_string($str);
     return $str;
+}
+
+function tt_update_settings($updated_setting)
+{
+	global $db;
+	$name = $db->escape_string($updated_setting['name']);
+	$updated_value = array('value' => $db->escape_string($updated_setting['value']));
+	$db->update_query("settings", $updated_value, "name='$name'");
+	rebuild_settings();
 }

@@ -290,8 +290,8 @@ $server_param = array(
     'mark_pm_unread' => array(
         'function'  => 'mark_pm_unread_func',
         'signature' => array(array($xmlrpcArray),
-                             array($xmlrpcStruct, $xmlrpcString, $xmlrpcString)),
-        'docstring' => 'message id, box id',
+                             array($xmlrpcStruct, $xmlrpcString)),
+        'docstring' => 'message id',
     ),
     
     'get_quote_pm' => array(
@@ -560,6 +560,22 @@ $server_param = array(
     						 array($xmlrpcStruct, $xmlrpcBase64,$xmlrpcString ,$xmlrpcString),
     						 ),
     ),
+    'sign_in' => array (
+    	'function' => 'sign_in_func',
+    	'signature' => array(
+                             array($xmlrpcStruct, $xmlrpcString,$xmlrpcString),
+    						 array($xmlrpcStruct, $xmlrpcString,$xmlrpcString,$xmlrpcBase64),
+    						 array($xmlrpcStruct, $xmlrpcString,$xmlrpcString,$xmlrpcBase64,$xmlrpcBase64),
+    						 array($xmlrpcStruct, $xmlrpcString,$xmlrpcString,$xmlrpcBase64,$xmlrpcBase64,$xmlrpcBase64),
+    						 ),
+    ), 
+    'prefetch_account' => array(
+    	'function' => 'prefetch_account_func',
+    	'signature' => array(
+                             array($xmlrpcStruct, $xmlrpcBase64),
+    						 ),
+    ),
+    
     //**********************************************
     // Puch related functions
     //**********************************************
@@ -567,6 +583,7 @@ $server_param = array(
     'update_push_status' => array(
         'function' => 'update_push_status_func',
         'signature' => array(array($xmlrpcStruct, $xmlrpcStruct),
-                             array($xmlrpcStruct, $xmlrpcStruct, $xmlrpcBase64, $xmlrpcBase64)),
+                             array($xmlrpcStruct, $xmlrpcStruct, $xmlrpcBase64, $xmlrpcBase64),
+                             ),
     ),
 );

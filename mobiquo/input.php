@@ -1,7 +1,6 @@
 <?php
 
 defined('IN_MOBIQUO') or exit;
-
 class Tapatalk_Input {
 
     const INT = 'INT';
@@ -11,7 +10,7 @@ class Tapatalk_Input {
 
     static public function filterXmlInput(array $filters, $xmlrpc_params){
         global $db, $mybb;
-
+		require_once MYBB_ROOT.$mybb->settings['tapatalk_directory'].'/emoji/emoji.class.php';
         $params = php_xmlrpc_decode($xmlrpc_params);
 
         // handle upload requests etc.
@@ -43,7 +42,14 @@ class Tapatalk_Input {
                     break;
                 case self::STRING:
                     if(isset($params[$i]))
-                        $data[$name] = $params[$i];
+                        if($name == 'subject' || $name == 'post_title' || $name == 'title')
+                        {
+                        	$data[$name] = tapatalkEmoji::covertUnifiedToEmpty($params[$i]);
+                        }
+                        else 
+                        {
+                        	$data[$name] = tapatalkEmoji::covertEmojiToName($params[$i]);
+                        }
                     else
                         $data[$name] = '';
                     $data[$name.'_esc'] = $db->escape_string($data[$name]);
@@ -57,5 +63,6 @@ class Tapatalk_Input {
 
         return $data;
     }
-
+    
+    
 }

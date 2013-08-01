@@ -121,7 +121,7 @@ switch ($request_method)
         $_GET['page'] = $page;
         $_GET['perpage'] = $limit;
         
-        if (isset($request_params[2]) && $request_params[2])
+        if (!empty($request_params[2]))
         {
             $_GET['action'] = 'results';
             $_GET['sid'] = $request_params[2];
@@ -143,6 +143,7 @@ switch ($request_method)
                 }
             }
         }
+       
         break;
     case 'get_unread_topic':
         $function_file_name = 'search';
@@ -151,7 +152,7 @@ switch ($request_method)
         $_GET['page'] = $page;
         $_GET['perpage'] = $limit;
         
-        if (isset($request_params[2]) && $request_params[2])
+        if (!empty($request_params[2]))
         {
             $_GET['action'] = 'results';
             $_GET['sid'] = $request_params[2];
@@ -322,6 +323,17 @@ switch ($request_method)
     	$_POST['email'] =  $request_params[1];
     	$_POST['email2'] =  $request_params[1];
     	break;
+    case 'sign_in':
+    	$_POST['token'] = $request_params[0];
+    	$_POST['code'] = $request_params[1];
+    	$_POST['email'] = $request_params[2];
+    	$_POST['username'] = $request_params[3];
+    	$_POST['password'] = $request_params[4];
+    	break;
+    case 'prefetch_account':
+    	$_POST['email'] = $request_params[0];
+    	break;
+    
 }
 
 error_reporting(MOBIQUO_DEBUG);
@@ -331,7 +343,12 @@ if(empty($request_params))
 {
 	$request_params[0]='';
 }
-$_SERVER['QUERY_STRING'] = 'method='.$request_method.'&params='.$request_params[0];
+$taptalk_from = '';
+if(strpos($_SERVER['HTTP_USER_AGENT'], 'BYO') !== false)
+{
+	$taptalk_from = 'BYO';
+}
+$_SERVER['QUERY_STRING'] = 'method='.$request_method.'&params='.$request_params[0].'&from='.$taptalk_from;
 define("IN_MYBB", 1);
 require_once './global.php';
 
