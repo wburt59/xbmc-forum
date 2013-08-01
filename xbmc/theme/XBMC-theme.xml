@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<theme name="XBMC" version="1609">
+<theme name="XBMC" version="1610">
 	<properties>
 		<templateset><![CDATA[2]]></templateset>
 		<editortheme><![CDATA[default]]></editortheme>
@@ -306,7 +306,7 @@
 </html>]]></template>
 		<template name="forumbit_depth1_forum_lastpost" version="1606"><![CDATA[<a href="{$lastpost_link}" title="{$full_lastpost_subject}"><strong>{$lastpost_subject}</strong></a><br />
 <span class="postDate">{$lastpost_date} {$lastpost_time}</span> <span class="author">{$lang->by} {$lastpost_profilelink}</span>]]></template>
-		<template name="postbit_quote" version="0"><![CDATA[<a href="newreply.php?tid={$tid}&amp;pid={$post['pid']}" class="button button-small link-quote" title="{$lang->postbit_quote_title}"><span class="icon"></span>{$lang->postbit_quote}</a>]]></template>
+		<template name="postbit_quote" version="1610"><![CDATA[<a href="newreply.php?tid={$tid}&amp;replyto={$post['pid']}" class="button button-small link-quote" title="{$lang->postbit_quote_title}"><span class="icon"></span>{$lang->postbit_quote}</a>]]></template>
 		<template name="member_register_referrer" version="0"><![CDATA[<br />
 <fieldset class="trow2">
 <legend><strong>{$lang->referrer}</strong></legend>
@@ -364,7 +364,7 @@
 	{$gobutton}
 </form>]]></template>
 		<template name="postbit_find" version="0"><![CDATA[<a href="search.php?action=finduser&amp;uid={$post['uid']}" class="button button-small link-find" title="{$lang->postbit_find_title}"><span class="icon"></span>{$lang->postbit_find}</a>]]></template>
-		<template name="forumjump_advanced" version="1608"><![CDATA[<form action="forumdisplay.php" method="get">
+		<template name="forumjump_advanced" version="1609"><![CDATA[<form action="forumdisplay.php" method="get">
 	<label for="forumJump">{$lang->forumjump}</label>
 	<select name="{$name}" id="forumJump" onchange="window.location=({$forum_link})">
 		<option value="-1" {$jumpsel['default']}>{$lang->forumjump_select}</option>
@@ -420,7 +420,7 @@
 	// -->
 	</script>
 </td>]]></template>
-		<template name="private_send" version="0"><![CDATA[<html>
+		<template name="private_send" version="1610"><![CDATA[<html>
 <head>
 <title>{$lang->compose_pm}</title>
 {$headerinclude}
@@ -469,10 +469,10 @@
 <tr>
 <td class="trow1" valign="top"><strong>{$lang->compose_options}</strong></td>
 <td class="trow1"><span class="smalltext">
-<label><input type="checkbox" class="checkbox" name="options[signature]" value="1" tabindex="5" {$optionschecked['signature']} />{$lang->options_sig}</label><br />
+{$private_send_signature}
 <label><input type="checkbox" class="checkbox" name="options[disablesmilies]" value="1" tabindex="6" {$optionschecked['disablesmilies']} />{$lang->options_disable_smilies}</label><br />
 <label><input type="checkbox" class="checkbox" name="options[savecopy]" value="1" tabindex="7" {$optionschecked['savecopy']} />{$lang->options_save_copy}</label><br />
-<!--input type="hidden" name="options[readreceipt]" value="{$options['readreceipt']}" /-->
+{$private_send_tracking}
 </span></td>
 </tr>
 </table>
@@ -648,7 +648,7 @@
 		<template name="header_welcomeblock_guest" version="0"><![CDATA[<div id="quick_login"><div id="welcomeMessage"><strong>{$lang->welcome_guest}</strong> In order to write on our forums you need to <a href="{$mybb->settings['bburl']}/member.php?action=login" onclick="MyBB.quickLogin(); return false;">login</a>. If you don't have a login yet, please <a href="{$mybb->settings['bburl']}/member.php?action=register">create a free account</a>.</div>
 </div>]]></template>
 		<template name="postbit_multiquote" version="1606"><![CDATA[<a href="javascript:Thread.multiQuote({$post['pid']});" id="multiquote_link_{$post['pid']}" title="{$lang->postbit_multiquote_title}" class="button button-small link-multiQuote noJShide"><span class="icon"></span>{$lang->postbit_multiquote}</a>]]></template>
-		<template name="newthread" version="1606"><![CDATA[<html>
+		<template name="newthread" version="1610"><![CDATA[<html>
 <head>
 <title>{$lang->newthread_in}</title>
 {$headerinclude}
@@ -668,7 +668,7 @@
 {$loginbox}
 <tr>
 <td class="trow2" width="20%"><strong>{$lang->thread_subject}</strong></td>
-<td class="trow2">{$prefixselect}<input type="text" class="textbox" name="subject" size="40" maxlength="85" value="{$subject}" tabindex="1" /></td>
+<td class="trow2">{$prefixselect}<input type="text" class="textbox" name="subject" size="40" maxlength="80" value="{$subject}" tabindex="1" /></td>
 </tr>
 {$posticons}
 <tr>
@@ -682,7 +682,7 @@
 <tr>
 <td class="trow1" valign="top"><strong>{$lang->post_options}</strong></td>
 <td class="trow1"><span class="smalltext">
-<label><input type="checkbox" class="checkbox" name="postoptions[signature]" value="1" tabindex="7"{$postoptionschecked['signature']} /> {$lang->options_sig}</label>
+{$option_signature}
 {$disablesmilies}</span></td>
 </tr>
 {$modoptions}
@@ -731,7 +731,7 @@
 </tr>
 </tfoot>
 </table>]]></template>
-		<template name="newreply" version="1606"><![CDATA[<html>
+		<template name="newreply" version="1610"><![CDATA[<html>
 <head>
 <title>{$lang->post_reply_to}</title>
 {$headerinclude}
@@ -751,7 +751,7 @@
 {$loginbox}
 <tr>
 <td class="trow2" width="20%"><strong>{$lang->post_subject}</strong></td>
-<td class="trow2"><input type="text" class="textbox" name="subject" size="40" maxlength="85" value="{$subject}" tabindex="1" /></td>
+<td class="trow2"><input type="text" class="textbox" name="subject" size="40" maxlength="80" value="{$subject}" tabindex="1" /></td>
 </tr>
 {$posticons}
 <tr>
@@ -765,7 +765,7 @@
 <tr>
 <td class="trow1" valign="top"><strong>{$lang->post_options}</strong></td>
 <td class="trow1"><span class="smalltext">
-<label><input type="checkbox" class="checkbox" name="postoptions[signature]" value="1" tabindex="6"{$postoptionschecked['signature']} /> {$lang->options_sig}</label>
+{$option_signature}
 {$disablesmilies}
 </span></td>
 </tr>
@@ -791,7 +791,7 @@
 </body>
 </html>]]></template>
 		<template name="forumdisplay_thread_multipage" version="1606"><![CDATA[<span class="threadPagination">({$lang->pages} {$threadpages}{$morelink})</span>]]></template>
-		<template name="forumdisplay" version="0"><![CDATA[<html>
+		<template name="forumdisplay" version="1609"><![CDATA[<html>
 <head>
 <title>{$mybb->settings['bbname']} - {$foruminfo['name']} </title>
 {$headerinclude}
@@ -813,7 +813,7 @@
 {$footer}
 </body>
 </html>]]></template>
-		<template name="showthread_quickreply" version="1606"><![CDATA[<form method="post" action="newreply.php?tid={$tid}&amp;processed=1" name="quick_reply_form" id="quick_reply_form">
+		<template name="showthread_quickreply" version="1610"><![CDATA[<form method="post" action="newreply.php?tid={$tid}&amp;processed=1" name="quick_reply_form" id="quick_reply_form">
 	<input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
 	<input type="hidden" name="subject" value="RE: {$thread['subject']}" />
 	<input type="hidden" name="action" value="do_newreply" />
@@ -838,7 +838,7 @@
 				<td class="trow1" valign="top" width="22%">
 					<strong>{$lang->message}</strong><br />
 					<span class="smalltext">{$lang->message_note}<br /><br />
-					<label><input type="checkbox" class="checkbox" name="postoptions[signature]" value="1" {$postoptionschecked['signature']} />&nbsp;<strong>{$lang->signature}</strong></label><br />
+					{$option_signature}
 					<label><input type="checkbox" class="checkbox" name="postoptions[disablesmilies]" value="1" />&nbsp;<strong>{$lang->disable_smilies}</strong></label>{$closeoption}</span>
 				</td>
 				<td class="trow1">
@@ -1025,7 +1025,7 @@
 ]]></template>
 		<template name="nav_bit" version="0"><![CDATA[<li><a href="{$navbit['url']}">{$navbit['name']}</a></li>]]></template>
 		<template name="postbit_replyall_pm" version="0"><![CDATA[<a href="private.php?action=send&amp;pmid={$id}&amp;do=replyall" class="button button-small link-replyAll" title="{$lang->reply_title}"><span class="icon"></span>{$lang->reply_to_all}</a>]]></template>
-		<template name="forumdisplay_threadlist" version="1606"><![CDATA[<div id="sectionHeader">
+		<template name="forumdisplay_threadlist" version="1610"><![CDATA[<div id="sectionHeader">
 	<h1>{$foruminfo['name']}</h1>
 	{$multipage}
 	<div class="functionBar">{$newthread}</div>
@@ -1054,7 +1054,7 @@
 		<tr>
 			<td style="text-align:right" colspan="{$colspan}">
 				<form action="forumdisplay.php" method="get">
-					<input type="hidden" name="selectall" value="{$allselected}" />
+					<input type="hidden" name="selectall" value="" />
 					<input type="hidden" name="fid" value="{$fid}" />
 					<select name="sortby">
 						<option value="subject" {$sortsel['subject']}>{$lang->sort_by_subject}</option>
@@ -1196,7 +1196,7 @@
 </table>]]></template>
 		<template name="postbit_quickdelete" version="0"><![CDATA[<a href="editpost.php?pid={$post['pid']}" onclick="Thread.deletePost({$post['pid']}); return false;" id="quick_delete_{$post['pid']}" class="button button-small link-quickDelete noJShide" title="{$lang->postbit_qdelete_title}"><span class="icon"></span>{$lang->postbit_qdelete}</a>]]></template>
 		<template name="forumdisplay_newthread" version="0"><![CDATA[<a href="newthread.php?fid={$fid}" class="button link-postThread"><span class="icon"></span>{$lang->post_thread}</a>]]></template>
-		<template name="headerinclude" version="1608"><![CDATA[<link rel="shortcut icon" href="http://xbmc.org/favicon.ico" type="image/x-ico; charset=binary">
+		<template name="headerinclude" version="1606"><![CDATA[<link rel="shortcut icon" href="http://xbmc.org/favicon.ico" type="image/x-ico; charset=binary">
 <link rel="icon" href="http://xbmc.org/favicon.ico" type="image/x-ico; charset=binary">
 
 <link rel="alternate" type="application/rss+xml" title="{$lang->latest_threads} (RSS 2.0)" href="{$mybb->settings['bburl']}/syndication.php" />
@@ -1267,7 +1267,7 @@
 </tr>]]></template>
 		<template name="postbit_warn" version="0"><![CDATA[<a href="warnings.php?action=warn&amp;uid={$post['uid']}&amp;pid={$post['pid']}" class="button button-small link-warn" title="{$lang->postbit_warn_title}">{$lang->postbit_warn}</a>]]></template>
 		<template name="postbit_report" version="0"><![CDATA[<a href="javascript:Thread.reportPost({$post['pid']});" class="button button-small link-report" title="{$lang->postbit_report_title}"><span class="icon"></span>{$lang->postbit_report}</a>]]></template>
-		<template name="headerbit_links_guest" version="1608"><![CDATA[<li><a href="{$mybb->settings['bburl']}/member.php?action=register">Create Account</a></li>
+		<template name="headerbit_links_guest" version="1609"><![CDATA[<li><a href="{$mybb->settings['bburl']}/member.php?action=register">Create Account</a></li>
 <li class="last"><a href="{$mybb->settings['bburl']}/member.php?action=login" onclick="MyBB.quickLogin(); return false;">{$lang->welcome_login}</a>
 <script type="text/javascript">
 <!--
@@ -1337,9 +1337,9 @@
 	</tbody>
 </table>]]></template>
 		<template name="forumdisplay_inlinemoderation_col" version="0"><![CDATA[<th class="col-modoptions"><input type="checkbox" name="allbox" onclick="inlineModeration.checkAll(this)" /></th>]]></template>
-		<template name="postbit_rep_button" version="0"><![CDATA[<a href="javascript:MyBB.reputation({$post['uid']},{$post['pid']});" class="button button-small link-reputation" title="{$lang->postbit_reputation_title}"><span class="icon"></span>{$lang->postbit_reputation_button}</a>]]></template>
+		<template name="postbit_rep_button" version="1609"><![CDATA[<a href="javascript:MyBB.reputation({$post['uid']},{$post['pid']});" class="button button-small link-reputation" title="{$lang->postbit_reputation_title}"><span class="icon"></span>{$lang->postbit_reputation_button}</a>]]></template>
 		<template name="nav" version="0"><![CDATA[<ul id="breadcrumb">{$nav}{$activebit}</ul>]]></template>
-		<template name="newreply_disablesmilies" version="0"><![CDATA[<br />
+		<template name="newreply_disablesmilies" version="1610"><![CDATA[<br />
 <label><input type="checkbox" class="checkbox" name="postoptions[disablesmilies]" value="1" tabindex="9"{$postoptionschecked['disablesmilies']} /> {$lang->options_disablesmilies}</label>]]></template>
 		<template name="newreply_modoptions" version="0"><![CDATA[<tr>
 <td class="trow2" valign="top"><strong>{$lang->mod_options}</strong></td>
@@ -1466,7 +1466,7 @@
 		<template name="private_read_to" version="1606"><![CDATA[<span class="recipients">{$lang->to} {$to_recipients}
 {$bcc}
 </span>]]></template>
-		<template name="editpost" version="1606"><![CDATA[<html>
+		<template name="editpost" version="1610"><![CDATA[<html>
 <head>
 <title>{$mybb->settings['bbname']} - {$lang->edit_post}</title>
 {$headerinclude}
@@ -1526,7 +1526,6 @@
 <br />
 <div align="center"><input type="submit" class="button" name="submit" value="{$lang->update_post}" tabindex="3" accesskey="s" />  <input type="submit" class="button" name="previewpost" value="{$lang->preview_post}" tabindex="4" /></div>
 <input type="hidden" name="action" value="do_editpost" />
-<input type="hidden" name="posthash" value="{$posthash}" />
 <input type="hidden" name="attachmentaid" value="" />
 <input type="hidden" name="attachmentact" value="" />
 </form>
@@ -1750,7 +1749,6 @@
 		<template name="member_register_hiddencaptcha" version="1606"><![CDATA[<tr class="visuallyHidden">
 	<td colspan="2" id="{$captcha_field}_status">{$lang->leave_this_field_empty} <input type="text" class="textbox" name="{$captcha_field}" id="{$captcha_field}" style="width: 100%" maxlength="50" value="" /></td>
 </tr>]]></template>
-		<template name="video_yahoo_embed" version="1606"><![CDATA[<div><object width="512" height="322"><param name="movie" value="http://d.yimg.com/static.video.yahoo.com/yep/YV_YEP.swf?ver=2.2.40" /><param name="wmode" value="opaque" /><param name="allowFullScreen" value="true" /><param name="AllowScriptAccess" VALUE="always" /><param name="bgcolor" value="#000000" /><param name="flashVars" value="id={$id}&vid={$vid}&lang=en-us&intl=us&embed=1" /><embed src="http://d.yimg.com/static.video.yahoo.com/yep/YV_YEP.swf?ver=2.2.40" type="application/x-shockwave-flash" width="512" height="322" allowFullScreen="true" AllowScriptAccess="always" bgcolor="#000000" wmode="opaque" flashVars="id={$id}&vid={$vid}&lang=en-us&intl=us&embed=1"></embed></object></div>]]></template>
 		<template name="usercp_profile" version="1606"><![CDATA[<html>
 <head>
 <title>{$mybb->settings['bbname']} - {$lang->edit_profile}</title>
