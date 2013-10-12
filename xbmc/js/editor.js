@@ -249,7 +249,7 @@ messageEditor.prototype = {
 /*
 		// Set the width/height of the area
 		subtract = 20;
-		subtract2 = 12;
+		subtract2 = 8;
 		areaContainer.style.height = parseInt(Element.getDimensions(this.editor).height)-this.toolbarHeight-subtract+"px";
 		areaContainer.style.width = parseInt(Element.getDimensions(this.editor).width)-subtract2+"px";
 */

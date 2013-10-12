@@ -364,9 +364,9 @@
 	{$gobutton}
 </form>]]></template>
 		<template name="postbit_find" version="0"><![CDATA[<a href="search.php?action=finduser&amp;uid={$post['uid']}" class="button button-small link-find" title="{$lang->postbit_find_title}"><span class="icon"></span>{$lang->postbit_find}</a>]]></template>
-		<template name="forumjump_advanced" version="1609"><![CDATA[<form action="forumdisplay.php" method="get">
+		<template name="forumjump_advanced" version="1610"><![CDATA[<form action="forumdisplay.php" method="get">
 	<label for="forumJump">{$lang->forumjump}</label>
-	<select name="{$name}" id="forumJump" onchange="window.location=({$forum_link})">
+	<select name="{$name}" id="forumJump">
 		<option value="-1" {$jumpsel['default']}>{$lang->forumjump_select}</option>
 		<option value="-1">--------------------</option>
 		<option value="-4">{$lang->forumjump_pms}</option>
@@ -377,7 +377,23 @@
 		{$forumjumpbits}
 	</select>
 	{$gobutton}
-</form>]]></template>
+</form>
+<script type="text/javascript">
+<!--
+	$$('#forumJump').invoke('observe', 'change', function(e)
+	{
+		var option = this.options[this.selectedIndex].value
+
+		if(option < 0)
+		{
+			window.location=('forumdisplay.php?fid='+option)
+			return
+		}
+
+		window.location=({$forum_link})
+	})
+//-->
+</script>]]>]]></template>
 		<template name="forumdisplay_thread_modbit" version="0"><![CDATA[<td class="{$bgcolor} col-modoptions"><input type="checkbox" class="checkbox" name="inlinemod_{$multitid}" id="inlinemod_{$multitid}" value="1" {$inlinecheck}  /></td>]]></template>
 		<template name="header" version="0"><![CDATA[	<div id="container">
 		<div id="header">
@@ -815,7 +831,7 @@
 </html>]]></template>
 		<template name="showthread_quickreply" version="1610"><![CDATA[<form method="post" action="newreply.php?tid={$tid}&amp;processed=1" name="quick_reply_form" id="quick_reply_form">
 	<input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
-	<input type="hidden" name="subject" value="RE: {$thread['subject']}" />
+	<input type="hidden" name="subject" value="RE: {$reply_subject}" />
 	<input type="hidden" name="action" value="do_newreply" />
 	<input type="hidden" name="posthash" value="{$posthash}" id="posthash" />
 	<input type="hidden" name="quoted_ids" value="" id="quoted_ids" />
