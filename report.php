@@ -57,9 +57,9 @@ if($mybb->input['action'] == "report")
 {
 	$plugins->run_hooks("report_start");
 	$pid = $mybb->input['pid'];
-	
+
 	$plugins->run_hooks("report_end");
-	
+
 	eval("\$report = \"".$templates->get("report")."\";");
 	output_page($report);
 }
@@ -93,7 +93,7 @@ elseif($mybb->input['action'] == "do_report" && $mybb->request_method == "post")
 				case "pgsql":
 				case "sqlite":
 					$query = $db->query("
-						SELECT u.username, u.email, u.receivepms, u.uid
+						SELECT DISTINCT u.username, u.email, u.receivepms, u.uid
 						FROM ".TABLE_PREFIX."users u
 						LEFT JOIN ".TABLE_PREFIX."usergroups g ON (((','|| u.additionalgroups|| ',' LIKE '%,'|| g.gid|| ',%') OR u.usergroup = g.gid))
 						WHERE (g.cancp=1 OR g.issupermod=1)
@@ -101,19 +101,19 @@ elseif($mybb->input['action'] == "do_report" && $mybb->request_method == "post")
 					break;
 				default:
 					$query = $db->query("
-						SELECT u.username, u.email, u.receivepms, u.uid
+						SELECT DISTINCT u.username, u.email, u.receivepms, u.uid
 						FROM ".TABLE_PREFIX."users u
 						LEFT JOIN ".TABLE_PREFIX."usergroups g ON (((CONCAT(',', u.additionalgroups, ',') LIKE CONCAT('%,', g.gid, ',%')) OR u.usergroup = g.gid))
 						WHERE (g.cancp=1 OR g.issupermod=1)
 					");
 			}
 		}
-		
+
 		while($mod = $db->fetch_array($query))
 		{
 			$emailsubject = $lang->sprintf($lang->emailsubject_reportpost, $mybb->settings['bbname']);
 			$emailmessage = $lang->sprintf($lang->email_reportpost, $mybb->user['username'], $mybb->settings['bbname'], $post['subject'], $mybb->settings['bburl'], str_replace('&amp;', '&', get_post_link($post['pid'], $thread['tid'])."#pid".$post['pid']), $thread['subject'], $mybb->input['reason']);
-			
+
 			if($mybb->settings['reportmethod'] == "pms" && $mod['receivepms'] != 0 && $mybb->settings['enablepms'] != 0)
 			{
 				$pm_recipients[] = $mod['uid'];
@@ -155,6 +155,8 @@ elseif($mybb->input['action'] == "do_report" && $mybb->request_method == "post")
 	}
 	else
 	{
+		$mybb->input['reason'] = utf8_handle_4byte_string($mybb->input['reason']);
+
 		$reportedpost = array(
 			"pid" => intval($mybb->input['pid']),
 			"tid" => $thread['tid'],
@@ -167,9 +169,9 @@ elseif($mybb->input['action'] == "do_report" && $mybb->request_method == "post")
 		$db->insert_query("reportedposts", $reportedpost);
 		$cache->update_reportedposts();
 	}
-	
+
 	$plugins->run_hooks("report_do_report_end");
-	
+
 	eval("\$report = \"".$templates->get("report_thanks")."\";");
 	output_page($report);
 }

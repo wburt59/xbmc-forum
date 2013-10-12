@@ -1,8 +1,14 @@
+From 1fac963daaef4d546ef962f1029f3183129c6fa8 Mon Sep 17 00:00:00 2001
+From: Franz Koch <franz.koch@elements-net.de>
+Date: Sat, 12 Oct 2013 16:55:49 +0200
+Subject: [PATCH] apply patches again
+
+---
  report.php | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/report.php b/report.php
-index 4328dd3..f3c82b2 100644
+index de335c4..6771070 100644
 --- a/report.php
 +++ b/report.php
 @@ -93,7 +93,7 @@ elseif($mybb->input['action'] == "do_report" && $mybb->request_method == "post")
@@ -23,3 +29,6 @@ index 4328dd3..f3c82b2 100644
  						FROM ".TABLE_PREFIX."users u
  						LEFT JOIN ".TABLE_PREFIX."usergroups g ON (((CONCAT(',', u.additionalgroups, ',') LIKE CONCAT('%,', g.gid, ',%')) OR u.usergroup = g.gid))
  						WHERE (g.cancp=1 OR g.issupermod=1)
+-- 
+1.8.3.msysgit.0
+
