@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<theme name="XBMC" version="1610">
+<theme name="XBMC" version="1611">
 	<properties>
 		<templateset><![CDATA[2]]></templateset>
 		<editortheme><![CDATA[default]]></editortheme>
@@ -364,7 +364,7 @@
 	{$gobutton}
 </form>]]></template>
 		<template name="postbit_find" version="0"><![CDATA[<a href="search.php?action=finduser&amp;uid={$post['uid']}" class="button button-small link-find" title="{$lang->postbit_find_title}"><span class="icon"></span>{$lang->postbit_find}</a>]]></template>
-		<template name="forumjump_advanced" version="1610"><![CDATA[<form action="forumdisplay.php" method="get">
+		<template name="forumjump_advanced" version="1611"><![CDATA[<form action="forumdisplay.php" method="get">
 	<label for="forumJump">{$lang->forumjump}</label>
 	<select name="{$name}" id="forumJump">
 		<option value="-1" {$jumpsel['default']}>{$lang->forumjump_select}</option>
@@ -393,7 +393,7 @@
 		window.location=({$forum_link})
 	})
 //-->
-</script>]]>]]></template>
+</script>]]></template>
 		<template name="forumdisplay_thread_modbit" version="0"><![CDATA[<td class="{$bgcolor} col-modoptions"><input type="checkbox" class="checkbox" name="inlinemod_{$multitid}" id="inlinemod_{$multitid}" value="1" {$inlinecheck}  /></td>]]></template>
 		<template name="header" version="0"><![CDATA[	<div id="container">
 		<div id="header">
@@ -1241,7 +1241,7 @@
 </script>
 {$newpmmsg}]]></template>
 		<template name="postbit_delete_pm" version="0"><![CDATA[<a href="private.php?action=delete&amp;pmid={$id}&amp;my_post_key={$mybb->post_code}" class="button button-small link-deletePm" title="{$lang->delete_title}"><span class="icon"></span>{$lang->delete}</a>]]></template>
-		<template name="forumdisplay_inlinemoderation" version="0"><![CDATA[<script type="text/javascript" src="jscripts/inline_moderation.js?ver=1600"></script>
+		<template name="forumdisplay_inlinemoderation" version="1611"><![CDATA[<script type="text/javascript" src="jscripts/inline_moderation.js?ver=1600"></script>
 		<form action="moderation.php" method="post">
 <input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
 <input type="hidden" name="fid" value="{$fid}" />
@@ -1270,7 +1270,7 @@
 	var all_text = "{$threadcount}";
 	var inlineType = "forum";
 	var inlineId = {$fid};
-// -->
+//-->
 </script>]]></template>
 		<template name="forumbit_depth2_forum" version="0"><![CDATA[<tr class="{$bgcolor}">
 <td class="col-icon"><img src="{$theme['imgdir']}/{$lightbulb['folder']}.gif" alt="{$lightbulb['altonoff']}" title="{$lightbulb['altonoff']}" class="ajax_mark_read" id="mark_read_{$forum['fid']}" /></td>
