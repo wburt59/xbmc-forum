@@ -1,8 +1,8 @@
 <?php
 /**
- * Goodbye Spammer 1.0
+ * Goodbye Spammer 1.1
 
- * Copyright 2010 Matthew Rogowski
+ * Copyright 2013 Matthew Rogowski
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,17 @@ if(!defined("IN_MYBB"))
 
 $plugins->add_hook("misc_start", "goodbyespammer");
 $plugins->add_hook("member_profile_end", "goodbyespammer_profile");
+$plugins->add_hook("postbit", "goodbyespammer_postbit");
 
 function goodbyespammer_info()
 {
 	return array(
 		"name" => "Goodbye Spammer",
 		"description" => "Makes it easy to delete all traces of a spammer from your forum.",
-		"website" => "http://mattrogowski.co.uk",
+		"website" => "https://github.com/MattRogowski/Goodbye-Spammer",
 		"author" => "MattRogowski",
-		"authorsite" => "http://mattrogowski.co.uk",
-		"version" => "1.0",
+		"authorsite" => "https://github.com/MattRogowski",
+		"version" => "1.1",
 		"compatibility" => "16*",
 		"guid" => "9ec5cdfaf770be01b3364fac9916e573"
 	);
@@ -165,6 +166,10 @@ delete=Delete",
 </td>
 </tr>"
 	);
+	$templates[] = array(
+		"title" => "goodbyespammer_postbit",
+		"template" => "<a href=\"{\$mybb->settings['bburl']}/misc.php?action=goodbyespammer&amp;uid={\$post['uid']}\" title=\"{\$lang->goodbyespammer_profile}\"><img src=\"{\$mybb->settings['bburl']}/{\$theme['imgdir']}/goodbyespammer_postbit.png\" alt=\"{\$lang->goodbyespammer_profile}\" title=\"{\$lang->goodbyespammer_profile}\" style=\"padding: 0px 5px;\" /></a>"
+	);
 	foreach($templates as $template)
 	{
 		$insert = array(
@@ -177,7 +182,9 @@ delete=Delete",
 		$db->insert_query("templates", $insert);
 	}
 	
-	find_replace_templatesets("member_profile_modoptions", "#".preg_quote('</table>')."#i", '{goodbyespammer}</table>');
+	find_replace_templatesets("member_profile_modoptions", "#".preg_quote('</table>')."#i", '<!--goodbyespammer--></table>');
+	find_replace_templatesets("postbit", "#".preg_quote('{$post[\'subject_extra\']}')."#i", '{$post[\'subject_extra\']}<div class="float_right">{$post[\'goodbyespammer\']}</div>');
+	find_replace_templatesets("postbit_classic", "#".preg_quote('{$post[\'subject_extra\']}')."#i", '{$post[\'subject_extra\']}<div class="float_right">{$post[\'goodbyespammer\']}</div>');
 }
 
 function goodbyespammer_deactivate()
@@ -204,12 +211,15 @@ function goodbyespammer_deactivate()
 		"goodbyespammer",
 		"goodbyespammer_option_checkbox",
 		"goodbyespammer_option_textbox",
-		"goodbyespammer_profile_link"
+		"goodbyespammer_profile_link",
+		"goodbyespammer_postbit"
 	);
 	$templates = "'" . implode("','", $templates) . "'";
 	$db->delete_query("templates", "title IN ({$templates})");
 	
-	find_replace_templatesets("member_profile_modoptions", "#".preg_quote('{goodbyespammer}')."#i", '', 0);
+	find_replace_templatesets("member_profile_modoptions", "#".preg_quote('<!--goodbyespammer-->')."#i", '', 0);
+	find_replace_templatesets("postbit", "#".preg_quote('<div class="float_right">{$post[\'goodbyespammer\']}</div>')."#i", '', 0);
+	find_replace_templatesets("postbit_classic", "#".preg_quote('<div class="float_right">{$post[\'goodbyespammer\']}</div>')."#i", '', 0);
 }
 
 function goodbyespammer()
@@ -229,7 +239,7 @@ function goodbyespammer()
 		
 		$uid = intval($mybb->input['uid']);
 		$user = get_user($uid);
-		if(!$user['uid'])
+		if(!$user['uid'] || !goodbyespammer_show($user['postnum'], $user['usergroup']))
 		{
 			error($lang->goodbyespammer_invalid_user);
 		}
@@ -660,20 +670,42 @@ function goodbyespammer_profile()
 {
 	global $mybb, $lang, $cache, $templates, $memprofile, $modoptions;
 	
-	// only show this if the current user has permission to use it and the profile we're on has less than the post limit for using this tool
+	
 	$groups = explode(",", $mybb->settings['goodbyespammergroups']);
 	$bangroup = $mybb->settings['goodbyespammerbangroup'];
 	$usergroups = $cache->read('usergroups');
 	
-	if(in_array($mybb->user['usergroup'], $groups) && (str_replace($mybb->settings['thousandssep'], '', $memprofile['postnum']) <= $mybb->settings['goodbyespammerpostlimit'] || $mybb->settings['goodbyespammerpostlimit'] == 0) && $memprofile['usergroup'] != $bangroup && $usergroups[$memprofile['usergroup']]['isbannedgroup'] != 1)
+	if(goodbyespammer_show($memprofile['postnum'], $memprofile['usergroup']))
 	{
 		$lang->load("goodbyespammer");
+		$lang->goodbyespammer_profile  = $lang->sprintf($lang->goodbyespammer_profile, $memprofile['username']);
 		eval("\$goodbyespammer = \"".$templates->get('goodbyespammer_profile_link')."\";");
-		$modoptions = str_replace("{goodbyespammer}", $goodbyespammer, $modoptions);
+		$modoptions = str_replace("<!--goodbyespammer-->", $goodbyespammer, $modoptions);
 	}
-	else
+}
+
+function goodbyespammer_postbit(&$post)
+{
+	global $mybb, $lang, $cache, $theme, $templates;
+	
+	if(goodbyespammer_show($post['postnum'], $post['usergroup']))
 	{
-		$modoptions = str_replace("{goodbyespammer}", "", $modoptions);
+		$lang->load("goodbyespammer");
+		$lang->goodbyespammer_profile  = $lang->sprintf($lang->goodbyespammer_profile, $post['username']);
+		eval("\$goodbyespammer_postbit = \"".$templates->get('goodbyespammer_postbit')."\";");
+		$post['goodbyespammer'] = $goodbyespammer_postbit;
 	}
+}
+
+function goodbyespammer_show($post_count, $usergroup)
+{
+	global $mybb, $cache;
+	
+	// only show this if the current user has permission to use it and the user has less than the post limit for using this tool
+	$groups = explode(",", $mybb->settings['goodbyespammergroups']);
+	$bangroup = $mybb->settings['goodbyespammerbangroup'];
+	$usergroups = $cache->read('usergroups');
+	
+	return (in_array($mybb->user['usergroup'], $groups) && !$usergroups[$usergroup]['cancp'] && !$usergroups[$usergroup]['canmodcp'] && !$usergroups[$usergroup]['issupermod'] && (str_replace($mybb->settings['thousandssep'], '', $post_count) <= $mybb->settings['goodbyespammerpostlimit'] || $mybb->settings['goodbyespammerpostlimit'] == 0) && $usergroup != $bangroup && $usergroups[$usergroup]['isbannedgroup'] != 1);
 }
 ?>
