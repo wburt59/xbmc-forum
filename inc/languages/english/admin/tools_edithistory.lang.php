@@ -3,7 +3,7 @@
  * Edit History Log
  * Copyright 2010 Starpaul20
  */
- 
+
 $l['can_manage_edit_history'] = "Can manage edit history?";
 $l['edit_history_log'] = "Edit History Log";
 
@@ -20,7 +20,7 @@ $l['thread'] = "Thread:";
 $l['post'] = "Post:";
 
 $l['username'] = "Username";
-$l['date'] = "Edit Date";
+$l['edit_date'] = "Edit Date";
 $l['ipaddress'] = "IP Address";
 $l['information'] = "Information";
 $l['reason'] = "Edit Reason";
@@ -39,5 +39,11 @@ $l['from_user'] = "From User:";
 $l['in'] = "in";
 $l['order'] = "order";
 $l['order_added'] = "Order Added";
+
+// Admin Log
+$l['admin_log_tools_edithistory_prune'] = "Pruned {4} edit histories older than {1} days";
+$l['admin_log_tools_edithistory_prune_user'] = "Pruned {4} edit histories older than {1} days for user #{2}";
+$l['admin_log_tools_edithistory_prune_thread'] = "Pruned {4} edit histories older than {1} days for thread #{3}";
+$l['admin_log_tools_edithistory_prune_user_thread'] = "Pruned {4} edit histories older than {1} days for user #{2} and thread #{3}";
 
 ?>

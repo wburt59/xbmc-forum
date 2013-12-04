@@ -7,7 +7,7 @@
 define("IN_MYBB", 1);
 define('THIS_SCRIPT', 'edithistory.php');
 
-$templatelist = "edithistory,edithistory_nohistory,edithistory_item,edithistory_comparison,multipage_page_current,multipage_page,multipage_nextpage,multipage_prevpage,multipage";
+$templatelist = "edithistory,edithistory_nohistory,edithistory_item,edithistory_item_revert,edithistory_comparison,edithistory_view,multipage_page_current,multipage_page,multipage_nextpage,multipage_prevpage,multipage";
 
 require_once "./global.php";
 require_once MYBB_ROOT."inc/class_parser.php";
@@ -22,7 +22,7 @@ $post = get_post($pid);
 $post['subject'] = htmlspecialchars_uni($parser->parse_badwords($post['subject']));
 
 // Invalid post
-if(!$post['pid'] && $mybb->input['action'] != "viewfull")
+if(!$post['pid'])
 {
 	error($lang->error_invalidpost);
 }
@@ -93,70 +93,118 @@ if($mybb->input['action'] == "compare")
 	$dateline = my_date($mybb->settings['dateformat'], $editlog['dateline']).", ".my_date($mybb->settings['timeformat'], $editlog['dateline']);
 	$lang->edit_as_of = $lang->sprintf($lang->edit_as_of, $dateline);
 
-	require_once MYBB_ROOT."inc/3rdparty/diff/Diff.php";        
-	require_once MYBB_ROOT."inc/3rdparty/diff/Diff/Renderer/inline.php";
+	require_once MYBB_ROOT."inc/3rdparty/diff/Diff.php";
+	require_once MYBB_ROOT."inc/3rdparty/diff/Diff/Renderer.php";
+	require_once MYBB_ROOT."inc/3rdparty/diff/Diff/Renderer/Inline.php";
 
 	$message1 = explode("\n", $editlog['originaltext']);
 	$message2 = explode("\n", $post['message']);
 
-	$diff = new Text_Diff('auto', array($message1, $message2));
-	$renderer = new Text_Diff_Renderer_inline();
+	$diff = new Horde_Text_Diff('auto', array($message1, $message2));
+	$renderer = new Horde_Text_Diff_Renderer_Inline();
 
 	if($editlog['originaltext'] == $post['message'])
 	{
 		$comparison = $lang->post_same;
 	}
 	else
-	$comparison = $renderer->render($diff);
-
-	$post['message'] = htmlspecialchars_uni($post['message']);
+	{
+		$comparison = $renderer->render($diff);
+	}
 
 	eval("\$postcomparison = \"".$templates->get("edithistory_comparison")."\";");
 	output_page($postcomparison);
 }
 
 // Viewing full text
-if($mybb->input['action'] == "viewfull")
+if($mybb->input['action'] == "view")
 {
+	add_breadcrumb($lang->view_original_text, "edithistory.php?action=view&pid={$pid}");
+
 	$query = $db->query("
-		SELECT e.*, u.username AS user_name
+		SELECT e.*, u.username
 		FROM ".TABLE_PREFIX."edithistory e
 		LEFT JOIN ".TABLE_PREFIX."users u ON (e.uid=u.uid)
 		WHERE e.eid='".intval($mybb->input['eid'])."'
 	");
-	$viewfulledit = $db->fetch_array($query);
+	$edit = $db->fetch_array($query);
 
-	if(!$viewfulledit['eid'])
+	if(!$edit['eid'])
 	{
 		error($lang->error_no_log);
 	}
 
-	$post = get_post($viewfulledit['pid']);
-	$forum = get_forum($post['fid']);
-
-	// Parse the post
-	$fulltext_parser = array(
-		"allow_html" => $forum['allowhtml'],
-		"allow_mycode" => $forum['allowmycode'],
-		"allow_smilies" => $forum['allowsmilies'],
-		"allow_imgcode" => $forum['allowimgcode'],
-		"allow_videocode" => $forum['allowvideocode'],
-		"filter_badwords" => 1
-	);
-
-	if(!$viewfulledit['reason'])
+	if(!$edit['reason'])
 	{
-		$viewfulledit['reason'] = $lang->na;
+		$edit['reason'] = $lang->na;
 	}
 	else
-	$viewfulledit['reason'] = htmlspecialchars_uni($viewfulledit['reason']);
+	{
+		$edit['reason'] = htmlspecialchars_uni($edit['reason']);
+	}
 
-	$originaltext = $parser->parse_message($viewfulledit['originaltext'], $fulltext_parser);
-	$dateline = my_date($mybb->settings['dateformat'], $viewfulledit['dateline']).", ".my_date($mybb->settings['timeformat'], $viewfulledit['dateline']);
-	$viewfulledit['username'] = build_profile_link($viewfulledit['user_name'], $viewfulledit['uid']);
+	// Sanitize post
+	$edit['subject'] = htmlspecialchars_uni($edit['subject']);
+	$edit['originaltext'] = nl2br(htmlspecialchars_uni($edit['originaltext']));
 
-	eval("\$viewfull = \"".$templates->get("edithistory_viewfull")."\";");
-	output_page($viewfull);
+	$dateline = my_date($mybb->settings['dateformat'], $edit['dateline']).", ".my_date($mybb->settings['timeformat'], $edit['dateline']);
+	$edit['username'] = build_profile_link($edit['username'], $edit['uid']);
+
+	eval("\$view = \"".$templates->get("edithistory_view")."\";");
+	output_page($view);
+}
+
+// Revert edited post
+if($mybb->input['action'] == "revert")
+{
+	// First, determine if they can revert edit
+	if($mybb->settings['editrevert'] == "2" && $mybb->usergroup['cancp'] != 1)
+	{
+		error_no_permission();
+	}
+	else if($mybb->settings['editrevert'] == "1" && ($mybb->usergroup['issupermod'] != 1 && $mybb->usergroup['cancp'] != 1))
+	{
+		error_no_permission();
+	}
+
+	$query = $db->simple_select("edithistory", "*", "eid='".intval($mybb->input['eid'])."'");
+	$history = $db->fetch_array($query);
+
+	if(!$history['eid'])
+	{
+		error($lang->error_no_log);
+	}
+
+	// Set up posthandler.
+	require_once MYBB_ROOT."inc/datahandlers/post.php";
+	$posthandler = new PostDataHandler("update");
+	$posthandler->action = "post";
+
+	// Set the post data that came from the input to the $post array.
+	$post = array(
+		"pid" => intval($history['pid']),
+		"subject" => $history['subject'],
+		"edit_uid" => 0,
+		"message" => $history['originaltext'],
+	);
+
+	$posthandler->set_data($post);
+
+	// Now let the post handler do all the hard work.
+	if(!$posthandler->validate_post())
+	{
+		$edit_errors = $posthandler->get_friendly_errors();
+		$post_errors = inline_error($edit_errors);
+		$mybb->input['action'] = "";
+	}
+	// No errors were found, we can call the update method.
+	else
+	{
+		$postinfo = $posthandler->update_post();
+		$url = get_post_link($history['pid'], $history['tid'])."#pid{$history['pid']}";
+
+		redirect($url, $lang->redirect_postreverted);
+	}
 }
 
 // Show the edit history for this post.
@@ -173,7 +221,7 @@ if(!$mybb->input['action'])
 	}
 
 	// Figure out if we need to display multiple pages.
-	$perpage = $mybb->settings['editsperpages'];
+	$perpage = intval($mybb->settings['editsperpages']);
 	$page = intval($mybb->input['page']);
 
 	$query = $db->simple_select("edithistory", "COUNT(eid) AS history_count", "pid='{$pid}'");
@@ -198,7 +246,7 @@ if(!$mybb->input['action'])
 	$multipage = multipage($history_count, $perpage, $page, "edithistory.php?pid={$pid}");
 
 	$query = $db->query("
-		SELECT e.*, u.username AS user_name
+		SELECT e.*, u.username
 		FROM ".TABLE_PREFIX."edithistory e
 		LEFT JOIN ".TABLE_PREFIX."posts p ON (e.pid=p.pid)
 		LEFT JOIN ".TABLE_PREFIX."users u ON (e.uid=u.uid)
@@ -206,7 +254,6 @@ if(!$mybb->input['action'])
 		ORDER BY e.dateline DESC
 		LIMIT {$start}, {$perpage}
 	");
-
 	while($history = $db->fetch_array($query))
 	{
 		$alt_bg = alt_trow();
@@ -214,9 +261,12 @@ if(!$mybb->input['action'])
 		{
 			$history['reason'] = $lang->na;
 		}
-		$history['reason'] = htmlspecialchars_uni($history['reason']);
+		else
+		{
+			$history['reason'] = htmlspecialchars_uni($history['reason']);
+		}
 
-		$history['username'] = build_profile_link($history['user_name'], $history['uid']);
+		$history['username'] = build_profile_link($history['username'], $history['uid']);
 		$dateline = my_date($mybb->settings['dateformat'], $history['dateline']).", ".my_date($mybb->settings['timeformat'], $history['dateline']);
 
 		// Sanitize post
@@ -224,10 +274,31 @@ if(!$mybb->input['action'])
 
 		if($mybb->settings['edithistorychar'] > 0 && my_strlen($history['originaltext']) > $mybb->settings['edithistorychar'])
 		{
-			$originaltext = my_substr($history['originaltext'], 0, $mybb->settings['edithistorychar']) . "... <span class=\"smalltext\">[<a href=\"javascript:MyBB.popupWindow('edithistory.php?action=viewfull&eid={$history['eid']}', 'viewfull', '400', '500') \">{$lang->view_full_post}</a>]<span>";
+			$history['originaltext'] = my_substr($history['originaltext'], 0, $mybb->settings['edithistorychar']) . "... <strong><a href=\"edithistory.php?action=view&pid={$history['pid']}&eid={$history['eid']} \">{$lang->read_more}</a></strong>";
+			$originaltext = nl2br($history['originaltext']);
 		}
 		else
-		$originaltext = $history['originaltext'];
+		{
+			$originaltext = nl2br($history['originaltext']);
+		}
+
+		// Show revert option if allowed
+		if($mybb->settings['editrevert'] == "2" && $mybb->usergroup['cancp'] == 1)
+		{
+			eval("\$revert = \"".$templates->get("edithistory_item_revert")."\";");
+		}
+		elseif($mybb->settings['editrevert'] == "1" && ($mybb->usergroup['issupermod'] == 1 || $mybb->usergroup['cancp'] == 1))
+		{
+			eval("\$revert = \"".$templates->get("edithistory_item_revert")."\";");
+		}
+		elseif($mybb->settings['editrevert'] == "0")
+		{
+			eval("\$revert = \"".$templates->get("edithistory_item_revert")."\";");
+		}
+		else
+		{
+			$revert = "";
+		}
 
 		eval("\$edit_history .= \"".$templates->get("edithistory_item")."\";");
 	}

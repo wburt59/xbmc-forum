@@ -21,6 +21,17 @@ if(my_strpos($_SERVER['PHP_SELF'], 'editpost.php'))
 	$templatelist .= 'editpost_reason';
 }
 
+// Neat trick for caching our custom template(s)
+if(my_strpos($_SERVER['PHP_SELF'], 'showthread.php'))
+{
+	global $templatelist;
+	if(isset($templatelist))
+	{
+		$templatelist .= ',';
+	}
+	$templatelist .= 'postbit_edithistory';
+}
+
 // Tell MyBB when to run the hooks
 $plugins->add_hook("datahandler_post_update", "edithistory_run");
 $plugins->add_hook("postbit", "edithistory_postbit");
@@ -37,6 +48,7 @@ $plugins->add_hook("admin_user_users_delete_commit", "edithistory_delete");
 $plugins->add_hook("admin_tools_menu_logs", "edithistory_admin_menu");
 $plugins->add_hook("admin_tools_action_handler", "edithistory_admin_action_handler");
 $plugins->add_hook("admin_tools_permissions", "edithistory_admin_permissions");
+$plugins->add_hook("admin_tools_get_admin_log_action", "edithistory_admin_adminlog");
 
 // The information that shows up on the plugin manager
 function edithistory_info()
@@ -47,7 +59,7 @@ function edithistory_info()
 		"website"			=> "http://galaxiesrealm.com/index.php",
 		"author"			=> "Starpaul20",
 		"authorsite"		=> "http://galaxiesrealm.com/index.php",
-		"version"			=> "1.2.2",
+		"version"			=> "1.4",
 		"guid"				=> "b8223bbc5a67bc02ea405bcc4101a56c",
 		"compatibility"		=> "16*"
 	);
@@ -57,6 +69,9 @@ function edithistory_info()
 function edithistory_install()
 {
 	global $db;
+	edithistory_uninstall();
+	$collation = $db->build_create_table_collation();
+
 	$db->write_query("CREATE TABLE ".TABLE_PREFIX."edithistory (
 				eid int(10) unsigned NOT NULL auto_increment,
 				pid int(10) unsigned NOT NULL default '0',
@@ -69,9 +84,10 @@ function edithistory_install()
 				reason varchar(200) NOT NULL default '',
 				KEY pid (pid),
 				PRIMARY KEY(eid)
-			) ENGINE=MyISAM;");
+			) ENGINE=MyISAM{$collation}");
 
 	$db->add_column("posts", "reason", "varchar(200) NOT NULL default ''");
+	$db->add_column("posts", "hashistory", "int(1) NOT NULL default '0'");
 }
 
 // Checks to make sure plugin is installed
@@ -98,12 +114,33 @@ function edithistory_uninstall()
 	{
 		$db->drop_column("posts", "reason");
 	}
+
+	if($db->field_exists("hashistory", "posts"))
+	{
+		$db->drop_column("posts", "hashistory");
+	}
 }
 
 // This function runs when the plugin is activated.
 function edithistory_activate()
 {
 	global $db;
+
+	// Upgrade support (from 1.2.x to 1.3)
+	if(!$db->field_exists("hashistory", "posts"))
+	{
+		$db->add_column("posts", "hashistory", "int(1) NOT NULL default '0'");
+
+		$query = $db->simple_select("edithistory", "DISTINCT pid");
+		while($history = $db->fetch_array($query))
+		{
+			$update_array = array(
+				"hashistory" => 1
+			);
+			$db->update_query("posts", $update_array, "pid='{$history['pid']}'");
+		}
+	}
+
 	$insertarray = array(
 		'name' => 'edithistory',
 		'title' => 'Edit History Settings',
@@ -128,12 +165,26 @@ function edithistory_activate()
 	$db->insert_query("settings", $insertarray);
 
 	$insertarray = array(
+		'name' => 'editrevert',
+		'title' => 'Edit Reversion',
+		'description' => 'Allows you to determine who has permission to revert posts.',
+		'optionscode' => 'radio
+0=Admins, Super Mods and Mods
+1=Admins and Super Mods only
+2=Admins only',
+		'value' => 1,
+		'disporder' => 2,
+		'gid' => $gid
+	);
+	$db->insert_query("settings", $insertarray);
+
+	$insertarray = array(
 		'name' => 'editsperpages',
 		'title' => 'Edits Per Page',
 		'description' => 'Here you can enter the number of edits to show per page.',
 		'optionscode' => 'text',
 		'value' => 10,
-		'disporder' => 2,
+		'disporder' => 3,
 		'gid' => $gid
 	);
 	$db->insert_query("settings", $insertarray);
@@ -144,7 +195,7 @@ function edithistory_activate()
 		'description' => 'The number of characters needed for the post to be cut off and a link to view the full text appears.',
 		'optionscode' => 'text',
 		'value' => 500,
-		'disporder' => 3,
+		'disporder' => 4,
 		'gid' => $gid
 	);
 	$db->insert_query("settings", $insertarray);
@@ -160,17 +211,19 @@ function edithistory_activate()
 </head>
 <body>
 {$header}
+{$post_errors}
 {$multipage}
 <table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
 <tr>
-<td class="thead" colspan="5"><strong>{$lang->edit_history}</strong></td>
+<td class="thead" colspan="6"><strong>{$lang->edit_history}</strong></td>
 </tr>
 <tr>
 <td class="tcat" align="center"><span class="smalltext"><strong>{$lang->edit_reason}</strong></span></td>
-<td class="tcat" width="15%" align="center"><span class="smalltext"><strong>{$lang->edited_by}</strong></span></td>
+<td class="tcat" width="10%" align="center"><span class="smalltext"><strong>{$lang->edited_by}</strong></span></td>
 <td class="tcat" width="10%" align="center"><span class="smalltext"><strong>{$lang->ip_address}</strong></span></td>
 <td class="tcat" width="15%" align="center"><span class="smalltext"><strong>{$lang->date}</strong></span></td>
-<td class="tcat" width="40%" align="center"><span class="smalltext"><strong>{$lang->original_text}</strong></span></td>
+<td class="tcat" width="35%" align="center"><span class="smalltext"><strong>{$lang->original_text}</strong></span></td>
+<td class="tcat" width="15%" align="center"><span class="smalltext"><strong>{$lang->options}</strong></span></td>
 </tr>
 {$edit_history}
 </tr>
@@ -188,7 +241,7 @@ function edithistory_activate()
 	$insert_array = array(
 		'title'		=> 'edithistory_nohistory',
 		'template'	=> $db->escape_string('<tr>
-<td class="trow1" colspan="5" align="center">{$lang->no_history}</td>
+<td class="trow1" colspan="6" align="center">{$lang->no_history}</td>
 </tr>'),
 		'sid'		=> '-1',
 		'version'	=> '',
@@ -203,8 +256,18 @@ function edithistory_activate()
 <td class="{$alt_bg}" align="center">{$history[\'username\']}</td>
 <td class="{$alt_bg}" align="center">{$history[\'ipaddress\']}</td>
 <td class="{$alt_bg}" align="center">{$dateline}</td>
-<td class="{$alt_bg}">{$originaltext}<br /><span class="smalltext">[<a href="edithistory.php?action=compare&pid={$history[\'pid\']}&eid={$history[\'eid\']}">{$lang->compare_posts}</a>]<span></td>
+<td class="{$alt_bg}">{$originaltext}</td>
+<td class="{$alt_bg}" align="center"><strong><a href="edithistory.php?action=compare&pid={$history[\'pid\']}&eid={$history[\'eid\']}" title="{$lang->compare_posts}">{$lang->compare}</a> | <a href="edithistory.php?action=view&pid={$history[\'pid\']}&eid={$history[\'eid\']}" title="{$lang->view_original_text_post}">{$lang->view}</a>{$revert}</strong></td>
 </tr>'),
+		'sid'		=> '-1',
+		'version'	=> '',
+		'dateline'	=> TIME_NOW
+	);
+	$db->insert_query("templates", $insert_array);
+
+	$insert_array = array(
+		'title'		=> 'edithistory_item_revert',
+		'template'	=> $db->escape_string(' | <a href="edithistory.php?action=revert&pid={$history[\'pid\']}&eid={$history[\'eid\']}" title="{$lang->revert_current_post}" onclick="if(confirm(&quot;{$lang->revert_post_confirm}&quot;))window.location=this.href.replace(\'action=revert\',\'action=revert\');return false;">{$lang->revert}</a>'),
 		'sid'		=> '-1',
 		'version'	=> '',
 		'dateline'	=> TIME_NOW
@@ -247,15 +310,13 @@ padding: 2px;
 <br />
 <table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
 <tr>
-<td class="thead" colspan="5"><strong>{$lang->edit_history}</strong></td>
+<td class="thead"><strong>{$lang->edit_history}</strong></td>
 </tr>
 <tr>
-<td class="tcat" width="50%"><span class="smalltext"><strong>{$lang->edit_as_of}</strong></span></td>
-<td class="tcat" width="50%"><span class="smalltext"><strong>{$lang->current_post}</strong></span></td>
+<td class="tcat"><span class="smalltext"><strong>{$lang->edit_as_of}</strong></span></td>
 </tr>
 <tr>
-<td class="trow1" width="50%">{$comparison}</td>
-<td class="trow1" width="50%">{$post[\'message\']}</td>
+<td class="trow1"><pre style="white-space: pre-wrap;">{$comparison}</pre></td>
 </tr>
 </table>
 {$footer}
@@ -268,53 +329,44 @@ padding: 2px;
 	$db->insert_query("templates", $insert_array);
 
 	$insert_array = array(
-		'title'		=> 'edithistory_viewfull',
+		'title'		=> 'edithistory_view',
 		'template'	=> $db->escape_string('<html>
 <head>
-<title>{$mybb->settings[\'bbname\']} - {$lang->view_full_post}</title>
+<title>{$mybb->settings[\'bbname\']} - {$lang->view_original_text}</title>
 {$headerinclude}
 </head>
 <body>
+{$header}
 <table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
 <tr>
-<td class="trow1" align="center">
-<strong><span class="largetext">{$lang->view_full_post}</span></strong>
-<table cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-<tr>
-<td class="trow2"><strong>{$lang->edited_by}:</strong></td>
-<td class="trow2">{$viewfulledit[\'username\']}</td>
+<td class="thead" colspan="2"><strong>{$lang->view_original_text}</strong></td>
 </tr>
 <tr>
-<td class="trow1"><strong>{$lang->ip_address}:</strong></td>
-<td class="trow1">{$viewfulledit[\'ipaddress\']}</td>
+<td class="trow1" width="30%"><strong>{$lang->edited_by}:</strong></td>
+<td class="trow1">{$edit[\'username\']}</td>
 </tr>
 <tr>
-<td class="trow2"><strong>{$lang->subject}:</strong></td>
-<td class="trow2">{$viewfulledit[\'subject\']}</td>
+<td class="trow2" width="30%"><strong>{$lang->ip_address}:</strong></td>
+<td class="trow2">{$edit[\'ipaddress\']}</td>
 </tr>
 <tr>
-<td class="trow1"><strong>{$lang->date}:</strong></td>
-<td class="trow1">{$dateline}</td>
+<td class="trow1" width="30%"><strong>{$lang->subject}:</strong></td>
+<td class="trow1">{$edit[\'subject\']}</td>
 </tr>
 <tr>
-<td class="trow2"><strong>{$lang->edit_reason}</strong></td>
-<td class="trow2">{$viewfulledit[\'reason\']}</td>
+<td class="trow2" width="30%"><strong>{$lang->date}:</strong></td>
+<td class="trow2">{$dateline}</td>
 </tr>
 <tr>
-<td class="trow2" colspan="2">{$originaltext}</td>
+<td class="trow1" width="30%"><strong>{$lang->edit_reason}:</strong></td>
+<td class="trow1">{$edit[\'reason\']}</td>
+</tr>
+<tr>
+<td class="trow2" width="30%"><strong>{$lang->original_text}:</strong></td>
+<td class="trow2">{$edit[\'originaltext\']}</td>
 </tr>
 </table>
-<br /><br />
-<div style="text-align: center;">
-<script type="text/javascript">
-<!--
-document.write(\'[<a href="javascript:window.close();">{$lang->close_window}</a>]\');
-// -->
-</script>
-</div>
-</td>
-</tr>
-</table>
+{$footer}
 </body>
 </html>'),
 		'sid'		=> '-1',
@@ -348,9 +400,9 @@ document.write(\'[<a href="javascript:window.close();">{$lang->close_window}</a>
 function edithistory_deactivate()
 {
 	global $db;
-	$db->delete_query("settings", "name IN('editmodvisibility','editsperpages','edithistorychar')");
+	$db->delete_query("settings", "name IN('editmodvisibility','editrevert','editsperpages','edithistorychar')");
 	$db->delete_query("settinggroups", "name IN('edithistory')");
-	$db->delete_query("templates", "title IN('edithistory','edithistory_nohistory','edithistory_item','postbit_edithistory','edithistory_comparison','edithistory_viewfull','editpost_reason')");
+	$db->delete_query("templates", "title IN('edithistory','edithistory_nohistory','edithistory_item','edithistory_item_revert','postbit_edithistory','edithistory_comparison','edithistory_view','editpost_reason')");
 	rebuild_settings();
 
 	include MYBB_ROOT."/inc/adminfunctions_templates.php";
@@ -383,6 +435,7 @@ function edithistory_run()
 
 	$reason = array(
 		"reason" => $db->escape_string($mybb->input['reason']),
+		"hashistory" => 1,
 	);
 	$db->update_query("posts", $reason, "pid='{$edit['pid']}'");
 }
@@ -402,10 +455,7 @@ function edithistory_postbit($post)
 
 	if(is_moderator($fid, "caneditposts"))
 	{
-		$query = $db->simple_select("edithistory", "pid", "pid='{$post['pid']}'", array('limit' => 1));
-		$edithistory = $db->fetch_array($query);
-
-		if($edithistory['pid'])
+		if($post['hashistory'])
 		{
 			if($mybb->settings['editmodvisibility'] == "2" && $mybb->usergroup['cancp'] == 1)
 			{
@@ -490,21 +540,34 @@ function edithistory_split_post($arguments)
 // Online activity
 function edithistory_online_activity($user_activity)
 {
-	global $user;
-	if(my_strpos($user['location'], "edithistory.php?action=compare") !== false)
+	global $user, $parameters;
+
+	$split_loc = explode(".php", $user_activity['location']);
+	if($split_loc[0] == $user['location'])
 	{
-		$user_activity['activity'] = "edithistory_compare";
-		$user_activity['pid'] = $parameters['pid'];
+		$filename = '';
 	}
-	if(my_strpos($user['location'], "edithistory.php?action=viewfull") !== false)
+	else
 	{
-		$user_activity['activity'] = "edithistory_history";
-		$user_activity['pid'] = $parameters['pid'];
+		$filename = my_substr($split_loc[0], -my_strpos(strrev($split_loc[0]), "/"));
 	}
-	else if(my_strpos($user['location'], "edithistory.php") !== false)
+
+	switch($filename)
 	{
-		$user_activity['activity'] = "edithistory_history";
-		$user_activity['pid'] = $parameters['pid'];
+		case "edithistory":
+			if($parameters['action'] == "compare")
+			{
+				$user_activity['activity'] = "edithistory_compare";
+			}
+			elseif($parameters['action'] == "view")
+			{
+				$user_activity['activity'] = "edithistory_history";
+			}
+			else
+			{
+				$user_activity['activity'] = "edithistory_history";
+			}
+			break;
 	}
 
 	return $user_activity;
@@ -519,7 +582,7 @@ function edithistory_online_location($plugin_array)
 	{
 		$plugin_array['location_name'] = $lang->comparing_edit_history;
 	}
-	else if($plugin_array['user_activity']['activity'] == "edithistory_history")
+	elseif($plugin_array['user_activity']['activity'] == "edithistory_history")
 	{
 		$plugin_array['location_name'] = $lang->viewing_edit_history;
 	}
@@ -571,6 +634,31 @@ function edithistory_admin_permissions($admin_permissions)
 	$admin_permissions['edithistory'] = $lang->can_manage_edit_history;
 
 	return $admin_permissions;
+}
+
+// Admin Log display
+function edithistory_admin_adminlog($plugin_array)
+{
+	global $lang;
+	$lang->load("tools_edithistory");
+
+	if($plugin_array['lang_string'] == admin_log_tools_edithistory_prune)
+	{
+		if($plugin_array['logitem']['data'][1] && !$plugin_array['logitem']['data'][2])
+		{
+			$plugin_array['lang_string'] = admin_log_tools_edithistory_prune_user;
+		}
+		elseif($plugin_array['logitem']['data'][2] && !$plugin_array['logitem']['data'][1])
+		{
+			$plugin_array['lang_string'] = admin_log_tools_edithistory_prune_thread;
+		}
+		elseif($plugin_array['logitem']['data'][1] && $plugin_array['logitem']['data'][2])
+		{
+			$plugin_array['lang_string'] = admin_log_tools_edithistory_prune_user_thread;
+		}
+	}
+
+	return $plugin_array;
 }
 
 ?>
