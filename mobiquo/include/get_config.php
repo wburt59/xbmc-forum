@@ -9,10 +9,10 @@ function get_config_func()
     $config_list = array(
         'sys_version'   => new xmlrpcval($mybb->version, 'string'),
         'version'       => new xmlrpcval($mobiquo_config['version'], 'string'),
-        'is_open'       => new xmlrpcval(isset($cache->cache['plugins']['active']['tapatalk']) && $mybb->settings['tapatalk_enable'], 'boolean'),
+        'is_open'       => new xmlrpcval(isset($cache->cache['plugins']['active']['tapatalk']), 'boolean'),
         'guest_okay'    => new xmlrpcval($mybb->usergroup['canview'] && $mybb->settings['boardclosed'] == 0, 'boolean'),
     );
-    if(!isset($cache->cache['plugins']['active']['tapatalk']) || !$mybb->settings['tapatalk_enable'])
+    if(!isset($cache->cache['plugins']['active']['tapatalk']))
     {
     	$config_list['is_open'] = new xmlrpcval(false,'boolean');
         $config_list['result_text'] = new xmlrpcval(basic_clean('Tapatalk is disabled'), 'base64');
@@ -22,10 +22,13 @@ function get_config_func()
     	$config_list['is_open'] = new xmlrpcval(false,'boolean');
         $config_list['result_text'] = new xmlrpcval(basic_clean($mybb->settings['boardclosed_reason']), 'base64');
     }
-    if ($mybb->settings['tapatalk_push'])
-    {
-        $config_list['push'] = new xmlrpcval(1, 'string');
-    }
+    
+    // First, load the stats cache.
+	$stats = $cache->read("stats");
+	$config_list['stats'] = new xmlrpcval(array(
+        'topic'    => new xmlrpcval($stats['numthreads'], 'int'),
+        'user'     => new xmlrpcval($stats['numusers'], 'int'),
+    ), 'struct');
     
     if ($mybb->settings['tapatalk_reg_url'])
     {

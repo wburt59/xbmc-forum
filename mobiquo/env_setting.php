@@ -151,15 +151,14 @@ switch ($request_method)
         list($start, $limit, $page) = process_page($request_params[0], $request_params[1]);
         $_GET['page'] = $page;
         $_GET['perpage'] = $limit;
-        
+        $_GET['action'] = 'getunread';
         if (!empty($request_params[2]))
         {
-            $_GET['action'] = 'results';
-            $_GET['sid'] = $request_params[2];
-        }
-        else
-        {
-            $_GET['action'] = 'getunread';
+            //$_GET['action'] = 'results';
+            //$_GET['sid'] = $request_params[2];
+       
+           
+            
             if (isset($request_params[3]))
             {
                 if (isset($request_params[3]['only_in']) && is_array($request_params[3]['only_in']))
@@ -333,7 +332,20 @@ switch ($request_method)
     case 'prefetch_account':
     	$_POST['email'] = $request_params[0];
     	break;
-    
+    case 'search_user':
+    	$_POST['username'] = $request_params[0];
+    	$_POST['page'] = isset($request_params[1]) ? $request_params [1] : '1';
+    	$_POST['perpage'] = isset($request_params[2]) ? $request_params[2] : '20';
+    	break;
+    case 'get_recommended_user':
+    	$_POST['page'] = !empty($request_params[0]) ? $request_params [0] : '1';
+    	$_POST['perpage'] = isset($request_params[1]) ? $request_params[1] : '20';
+    	break;  
+    case 'ignore_user':
+    	$_GET['action'] = 'do_editlists';
+    	$_GET['manage'] = 'ignored';
+    	$_POST['user_id'] = $request_params[0];
+    	$_POST['mode'] = isset($request_params[1]) ? $request_params[1] : '1';
 }
 
 error_reporting(MOBIQUO_DEBUG);
@@ -355,8 +367,6 @@ require_once './global.php';
 if (!isset($cache->cache['plugins']['active']['tapatalk']) && $request_method != 'get_config')
     get_error('Tapatalk will not work on this forum before forum admin Install & Activate tapatalk plugin on forum side!');
 
-if (!$mybb->settings['tapatalk_enable'] && $request_method != 'get_config')
-    error('Tapatalk was disabled by forum admin!');
 
 // hide forum option
 if ($mybb->settings['tapatalk_hide_forum'])
