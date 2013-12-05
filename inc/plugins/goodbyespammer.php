@@ -231,8 +231,7 @@ function goodbyespammer()
 		$lang->load("goodbyespammer");
 		$lang->load("member");
 		
-		$groups = explode(",", $mybb->settings['goodbyespammergroups']);
-		if(!in_array($mybb->user['usergroup'], $groups))
+		if(!goodbyespammer_haspermissions())
 		{
 			error_no_permission();
 		}
@@ -670,11 +669,6 @@ function goodbyespammer_profile()
 {
 	global $mybb, $lang, $cache, $templates, $memprofile, $modoptions;
 	
-	
-	$groups = explode(",", $mybb->settings['goodbyespammergroups']);
-	$bangroup = $mybb->settings['goodbyespammerbangroup'];
-	$usergroups = $cache->read('usergroups');
-	
 	if(goodbyespammer_show($memprofile['postnum'], $memprofile['usergroup']))
 	{
 		$lang->load("goodbyespammer");
@@ -702,10 +696,33 @@ function goodbyespammer_show($post_count, $usergroup)
 	global $mybb, $cache;
 	
 	// only show this if the current user has permission to use it and the user has less than the post limit for using this tool
-	$groups = explode(",", $mybb->settings['goodbyespammergroups']);
+	if (!goodbyespammer_haspermissions()) {
+		return FALSE;
+	} 
 	$bangroup = $mybb->settings['goodbyespammerbangroup'];
 	$usergroups = $cache->read('usergroups');
-	
-	return (in_array($mybb->user['usergroup'], $groups) && !$usergroups[$usergroup]['cancp'] && !$usergroups[$usergroup]['canmodcp'] && !$usergroups[$usergroup]['issupermod'] && (str_replace($mybb->settings['thousandssep'], '', $post_count) <= $mybb->settings['goodbyespammerpostlimit'] || $mybb->settings['goodbyespammerpostlimit'] == 0) && $usergroup != $bangroup && $usergroups[$usergroup]['isbannedgroup'] != 1);
+
+	return (!$usergroups[$usergroup]['cancp'] && !$usergroups[$usergroup]['canmodcp'] && !$usergroups[$usergroup]['issupermod'] && (str_replace($mybb->settings['thousandssep'], '', $post_count) <= $mybb->settings['goodbyespammerpostlimit'] || $mybb->settings['goodbyespammerpostlimit'] == 0) && $usergroup != $bangroup && $usergroups[$usergroup]['isbannedgroup'] != 1);
+}
+
+function goodbyespammer_haspermissions() {
+	global $mybb;
+
+	$groups = explode(",", $mybb->settings['goodbyespammergroups']);
+
+	// don't only check primary group but also all additional groups for permissions
+	$hasAllowedUserGroup = FALSE;
+	$groupsOfCurrentUser = array($mybb->user['usergroup']);
+	if (isset($mybb->user['additionalgroups'])) {
+		$groupsOfCurrentUser = array_merge($groupsOfCurrentUser, explode(',', $mybb->user['additionalgroups']));
+	}
+	foreach ($groupsOfCurrentUser as $groupToCheck) {
+		if (in_array($groupToCheck, $groups)) {
+			$hasAllowedUserGroup = TRUE;
+			break;
+		}
+	}
+
+	return $hasAllowedUserGroup;
 }
 ?>
