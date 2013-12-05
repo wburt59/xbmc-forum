@@ -576,6 +576,28 @@ $server_param = array(
     						 ),
     ),
     
+    'search_user' => array(
+    	'function' => 'search_user_func',
+    	'signature' => array(array($xmlrpcStruct),
+    						 array($xmlrpcStruct, $xmlrpcBase64 ),
+    						 array($xmlrpcStruct, $xmlrpcBase64,$xmlrpcInt ,$xmlrpcInt),
+    						 ),
+    ),
+    
+    'get_recommended_user' => array(
+    	'function' => 'get_recommended_user_func',
+    	'signature' => array(array($xmlrpcStruct),
+    						 array($xmlrpcStruct,$xmlrpcInt ,$xmlrpcInt),
+    						 ),
+    ),
+    
+    'ignore_user' => array(
+    	'function' => 'ignore_user_func',
+    	'signature' => array(
+    						 array($xmlrpcStruct,$xmlrpcString ,$xmlrpcInt),
+    						 ),
+    ),
+    
     //**********************************************
     // Puch related functions
     //**********************************************

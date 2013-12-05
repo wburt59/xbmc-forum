@@ -44,7 +44,7 @@ function tapatalk_info()
         "website"       => "http://tapatalk.com",
         "author"        => "Quoord Systems Limited",
         "authorsite"    => "http://tapatalk.com",
-        "version"       => "3.5.0",
+        "version"       => "3.6.0",
         "guid"          => "e7695283efec9a38b54d8656710bf92e",
         "compatibility" => "16*"
     );
@@ -84,8 +84,10 @@ function tapatalk_install()
               create_time int(11) unsigned NOT NULL DEFAULT '0',
               PRIMARY KEY (push_id),
               KEY user_id (user_id),
-              KEY create_time (create_time)
-            )
+              KEY create_time (create_time),
+              KEY author (author)
+            ) DEFAULT CHARSET=utf8
+            
         ");
     }
     // Insert settings in to the database
@@ -112,12 +114,6 @@ function tapatalk_install()
     $gid_byo = $db->insert_id();
 
     $settings = array(
-        'enable' => array(
-            'title'         => 'Enable/Disable',
-            'description'   => 'Enable/Disable the Tapatalk',
-            'optionscode'   => 'onoff',
-            'value'         => '1'
-        ),
         'hide_forum' => array(
             'title'         => 'Hide Forums',
             'description'   => "Hide specific sub-forums from appearing in Tapatalk. Please enter a comma-separated sub-forum ID",
@@ -142,12 +138,7 @@ function tapatalk_install()
             'optionscode'   => 'text',
             'value'         => 'mobiquo'
         ),
-        'push' => array(
-            'title'         => 'Push Notification',
-            'description'   => 'Instant notifications of subscription topics, forums and private messages',
-            'optionscode'   => 'onoff',
-            'value'         => '1'
-        ),
+ 
         'datakeep' => array(
             'title'         => 'Uninstall Behaviour',
             'description'   => "Ability to retain 'tapatalk_' tables in DB. Useful if you're re-installing Tapatalk Plugin.",
@@ -155,8 +146,8 @@ function tapatalk_install()
             'value'         => 'keep'
         ),
         'push_key' => array(
-            'title'         => 'Tapatalk Push Key',
-            'description'   => 'Push Notification may not be enabled if this key is missing. Visit Forum Owner Area in Tapatalk.com to obtain Push Key for your forum.',
+            'title'         => 'Tapatalk API Key',
+            'description'   => 'Formerly known as Push Key. This key is now required for secure connection between your community and Tapatalk server. Features such as Push Notification and Single Sign-On requires this key to work. ',
             'optionscode'   => 'text',
             'value'         => ''
         ),
@@ -364,7 +355,7 @@ function tapatalk_global_start()
 
     header('Mobiquo_is_login: ' . ($mybb->user['uid'] > 0 ? 'true' : 'false'));
 
-    if ($mybb->usergroup['canview'] != 1 && in_array($request_method, array('get_config', 'login')))
+    if ($mybb->usergroup['canview'] != 1 && in_array($request_method, array('get_config', 'login','register','sign_in','prefetch_account','update_password','forget_password')))
     {
         define("ALLOWABLE_PAGE", 1);
     }
@@ -672,7 +663,8 @@ function tapatalk_push_reply()
     $ttp_push_data = array();
     while($user = $db->fetch_array($query))
     {
-        if ($user['uid'] == $mybb->user['uid']) continue;
+        if(ingnore_user_push($user)) continue;
+        
         $ttp_data[] = array(
             'userid'    => $user['uid'],
             'type'      => 'sub',
@@ -682,6 +674,7 @@ function tapatalk_push_reply()
             'author'    => tt_push_clean($mybb->user['username']),
             'dateline'  => TIME_NOW,
         );
+       
         tt_insert_push_data($ttp_data[count($ttp_data)-1]);
         if($user['sub'] == 1)
         {
@@ -689,7 +682,7 @@ function tapatalk_push_reply()
         }
     }
     
-    if(!empty($ttp_push_data) && $mybb->settings['tapatalk_push'])
+    if(!empty($ttp_push_data))
     {
         $ttp_post_data = array(
             'url'  => $mybb->settings['bburl'],
@@ -729,11 +722,8 @@ function tapatalk_push_quote()
             $query = $db->query("SELECT tu.*,u.uid FROM " . TABLE_PREFIX . "tapatalk_users AS tu LEFT JOIN
             " . TABLE_PREFIX ."users AS u ON tu.userid = u.uid  WHERE u.username = '$username'");
             $user = $db->fetch_array($query);
-            if(empty($user))
-            {
-                return false;
-            }
-            if ($user['uid'] == $mybb->user['uid']) continue;
+            
+            if(ingnore_user_push($user)) continue;
             $ttp_push_data = array();
             $ttp_data[] = array(
                 'userid'    => $user['uid'],
@@ -751,7 +741,7 @@ function tapatalk_push_quote()
             }
         }
         
-        if(!empty($ttp_push_data) && $mybb->settings['tapatalk_push'])
+        if(!empty($ttp_push_data))
         {
             $ttp_post_data = array(
                 'url'  => $mybb->settings['bburl'],
@@ -788,11 +778,7 @@ function tapatalk_push_tag()
             " . TABLE_PREFIX ."users AS u ON tu.userid = u.uid  WHERE u.username = '$username'");
             $user = $db->fetch_array($query);
             
-            if(empty($user))
-            {
-                continue;
-            }
-            if ($user['uid'] == $mybb->user['uid']) continue;
+            if(ingnore_user_push($user)) continue;
             $ttp_push_data = array();
             $ttp_data[] = array(
                 'userid'    => $user['uid'],
@@ -809,7 +795,7 @@ function tapatalk_push_tag()
                 $ttp_push_data[] = $ttp_data[count($ttp_data)-1];
             }
         }
-        if(!empty($ttp_push_data) && $mybb->settings['tapatalk_push'])
+        if(!empty($ttp_push_data))
         {
             $ttp_post_data = array(
                 'url'  => $mybb->settings['bburl'],
@@ -843,8 +829,7 @@ function tapatalk_push_newtopic()
     $ttp_push_data = array();
     while($user = $db->fetch_array($query))
     {
-        if ($user['uid'] == $mybb->user['uid']) continue;
-        
+        if(ingnore_user_push($user)) continue;
         $ttp_data[] = array(
             'userid'    => $user['uid'],
             'type'      => 'newtopic',
@@ -860,7 +845,7 @@ function tapatalk_push_newtopic()
         	$ttp_push_data[] = $ttp_data[count($ttp_data)-1];
         }
     }
-    if(!empty($ttp_push_data) && $mybb->settings['tapatalk_push'])
+    if(!empty($ttp_push_data))
     {
     	$ttp_post_data = array(
             'url'  => $mybb->settings['bburl'],
@@ -907,7 +892,8 @@ function tapatalk_push_pm()
     while($user = $db->fetch_array($query))
     {
         if ($user['toid'] == $mybb->user['uid']) continue;
-            
+        if (tt_check_ignored($user['toid'])) continue;
+        
         $ttp_data[] = array(
             'userid'    => $user['toid'],
             'type'      => 'pm',
@@ -923,7 +909,7 @@ function tapatalk_push_pm()
         }
     }
     
-    if(!empty($ttp_push_data) && $mybb->settings['tapatalk_push'])
+    if(!empty($ttp_push_data))
     {
         $ttp_post_data = array(
             'url'  => $mybb->settings['bburl'],
@@ -979,7 +965,8 @@ function tt_do_post_request($data,$is_test=false)
 			$hold_time = 0;
 		}
         //Send push
-        $push_resp = getContentFromRemoteServer($push_url, $hold_time, '', 'POST', $data);
+		$error_msg = '';
+        $push_resp = getContentFromRemoteServer($push_url, $hold_time, $error_msg, 'POST', $data);
         if((trim($push_resp) === 'Invalid push notification key') && !$is_test)
         {
         	$push_resp = 1;
@@ -1113,4 +1100,33 @@ function tt_update_settings($updated_setting)
 	$updated_value = array('value' => $db->escape_string($updated_setting['value']));
 	$db->update_query("settings", $updated_value, "name='$name'");
 	rebuild_settings();
+}
+
+function tt_check_ignored($uid)
+{
+	global $mybb;
+	$user = get_user($uid);
+	$user_ignored_array = array();
+	if(!empty($user['ignorelist']))
+		$user_ignored_array = explode(',', $user['ignorelist']);
+
+	if(in_array($mybb->user['uid'], $user_ignored_array))
+	{
+		return true;
+	}
+	return false;
+}
+
+function ingnore_user_push($user)
+{
+	global $mybb;
+	if(empty($user['uid'])) return true;
+	if ($user['uid'] == $mybb->user['uid']) return true;
+    if (tt_check_ignored($user['uid'])) return true;
+    if(defined("TAPATALK_PUSH".$user['uid']))
+	{
+	    return true;
+	}
+    define("TAPATALK_PUSH".$user['uid'], 1);
+    return false;    
 }

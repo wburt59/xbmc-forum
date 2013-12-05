@@ -577,81 +577,73 @@ function shutdown()
     }
 }
 
-function get_forum_icon($id, $type = 'forum', $lock = false, $new = false)
+function tp_get_forum_icon($id, $type = 'forum', $lock = false, $new = false)
 {
-    if (!in_array($type, array('link', 'category', 'forum')))
-        $type = 'forum';
-    
-    $icon_name = $type;
-    if ($type != 'link')
+    if ($type == 'link')
     {
-        if ($lock) $icon_name .= '_lock';
-        if ($new) $icon_name .= '_new';
+        if ($filename = tp_get_forum_icon_by_name('link'))
+            return $filename;
+    }
+    else
+    {
+        if ($lock && $new && $filename = tp_get_forum_icon_by_name('lock_new_'.$id))
+            return $filename;
+        if ($lock && $filename = tp_get_forum_icon_by_name('lock_'.$id))
+            return $filename;
+        if ($new && $filename = tp_get_forum_icon_by_name('new_'.$id))
+            return $filename;
+        if ($filename = tp_get_forum_icon_by_name($id))
+            return $filename;
+        
+        if ($type == 'category')
+        {
+            if ($lock && $new && $filename = tp_get_forum_icon_by_name('category_lock_new'))
+                return $filename;
+            if ($lock && $filename = tp_get_forum_icon_by_name('category_lock'))
+                return $filename;
+            if ($new && $filename = tp_get_forum_icon_by_name('category_new'))
+                return $filename;
+            if ($filename = tp_get_forum_icon_by_name('category'))
+                return $filename;
+        }
+        else
+        {
+            if ($lock && $new && $filename = tp_get_forum_icon_by_name('forum_lock_new'))
+                return $filename;
+            if ($lock && $filename = tp_get_forum_icon_by_name('forum_lock'))
+                return $filename;
+            if ($new && $filename = tp_get_forum_icon_by_name('forum_new'))
+                return $filename;
+            if ($filename = tp_get_forum_icon_by_name('forum'))
+                return $filename;
+        }
+        
+        if ($lock && $new && $filename = tp_get_forum_icon_by_name('lock_new'))
+            return $filename;
+        if ($lock && $filename = tp_get_forum_icon_by_name('lock'))
+            return $filename;
+        if ($new && $filename = tp_get_forum_icon_by_name('new'))
+            return $filename;
     }
     
-    $icon_map = array(
-        'category_lock_new' => array('category_lock', 'category_new', 'lock_new', 'category', 'lock', 'new'),
-        'category_lock'     => array('category', 'lock'),
-        'category_new'      => array('category', 'new'),
-        'lock_new'          => array('lock', 'new'),
-        'forum_lock_new'    => array('forum_lock', 'forum_new', 'lock_new', 'forum', 'lock', 'new'),
-        'forum_lock'        => array('forum', 'lock'),
-        'forum_new'         => array('forum', 'new'),
-        'category'          => array(),
-        'forum'             => array(),
-        'lock'              => array(),
-        'new'               => array(),
-        'link'              => array(),
-    );
+    return tp_get_forum_icon_by_name('default');
+}
+
+function tp_get_forum_icon_by_name($icon_name)
+{
+    $tapatalk_forum_icon_dir = TT_ROOT.'forum_icons/';
     
-    $final = empty($icon_map[$icon_name]);
+    if (file_exists($tapatalk_forum_icon_dir.$icon_name.'.png'))
+        return $icon_name.'.png';
     
-    if ($url = get_forum_icon_by_name($id, $icon_name, $final))
-        return $url;
-    
-    foreach ($icon_map[$icon_name] as $sub_name)
-    {
-        $final = empty($icon_map[$sub_name]);
-        if ($url = get_forum_icon_by_name($id, $sub_name, $final))
-            return $url;
-    }
+    if (file_exists($tapatalk_forum_icon_dir.$icon_name.'.jpg'))
+        return $icon_name.'.jpg';
     
     return '';
 }
 
-function get_forum_icon_by_name($id, $name, $final)
-{
-    global $tapatalk_forum_icon_dir, $tapatalk_forum_icon_url;
-    
-    $filename_array = array(
-        $name.'_'.$id.'.png',
-        $name.'_'.$id.'.jpg',
-        $id.'.png', $id.'.jpg',
-        $name.'.png',
-        $name.'.jpg',
-    );
-    
-    foreach ($filename_array as $filename)
-    {
-        if (file_exists($tapatalk_forum_icon_dir.$filename))
-        {
-            return $tapatalk_forum_icon_url.$filename;
-        }
-    }
-    
-    if ($final) {
-        if (file_exists($tapatalk_forum_icon_dir.'default.png'))
-            return $tapatalk_forum_icon_url.'default.png';
-        else if (file_exists($tapatalk_forum_icon_dir.'default.jpg'))
-            return $tapatalk_forum_icon_url.'default.jpg';
-    }
-    
-    return false;
-}
-
 function post_bbcode_clean($str)
 {
-	global $board_url;
 	$array_reg = array(
 		array('reg' => '/\[color=(.*?)\](.*?)\[\/color\]/sei','replace' => "mobi_color_convert('$1','$2' ,false)"),
 		array('reg' => '/\[php\](.*?)\[\/php\]/si','replace' => '[quote]$1[/quote]'),
@@ -818,11 +810,11 @@ function check_return_user_type($username)
  * @exmaple: getContentFromRemoteServer('http://push.tapatalk.com/push.php', 0, $error_msg, 'POST', $ttp_post_data)
  * @return string when get content successfully|false when the parameter is invalid or connection failed.
 */
-function getContentFromRemoteServer($url, $holdTime = 0, $error_msg='', $method = 'GET', $data = array())
+function getContentFromRemoteServer($url, $holdTime = 0, &$error_msg, $method = 'GET', $data = array())
 {
     //Validate input.
     $vurl = parse_url($url);
-    if ($vurl['scheme'] != 'http')
+    if ($vurl['scheme'] != 'http' && $vurl['scheme'] != 'https')
     {
         $error_msg = 'Error: invalid url given: '.$url;
         return false;
@@ -840,7 +832,15 @@ function getContentFromRemoteServer($url, $holdTime = 0, $error_msg='', $method 
 
     if(!empty($holdTime) && function_exists('file_get_contents') && $method == 'GET')
     {
-        $response = @file_get_contents($url);
+        $opts = array(
+            $vurl['scheme'] => array(
+                'method' => "GET",
+                'timeout' => $holdTime,
+            )
+        );
+
+        $context = stream_context_create($opts);
+        $response = file_get_contents($url,false,$context);
     }
     else if (@ini_get('allow_url_fopen'))
     {
@@ -881,10 +881,12 @@ function getContentFromRemoteServer($url, $holdTime = 0, $error_msg='', $method 
         {
             if($method == 'POST')
             {
-                $params = array('http' => array(
-                    'method' => 'POST',
-                    'content' => http_build_query($data, '', '&'),
-                ));
+                $params = array(
+                    $vurl['scheme'] => array(
+                        'method' => 'POST',
+                        'content' => http_build_query($data, '', '&'),
+                    )
+                );
                
                 $ctx = stream_context_create($params);
                 $old = ini_set('default_socket_timeout', $holdTime);
@@ -944,15 +946,14 @@ function tt_register_verify($tt_token,$tt_code)
 		$mybb->settings['tapatalk_push_key'] = '';
 	}
 	$url = "http://directory.tapatalk.com/au_reg_verify.php?token=".$tt_token."&code=".$tt_code."&key=" . $mybb->settings['tapatalk_push_key'];
+	$board_url = $mybb->settings['bburl'];
+	$url = $url . '&url=' . urlencode($board_url);
+	
 	$error_msg = '';
 	$response = getContentFromRemoteServer($url, 10 , $error_msg);
-	if(empty($response))
-	{
-		$response = getContentFromRemoteServer($url, 0 , $error_msg);
-	}
 	if(!empty($error_msg))
 	{
-		$response = '{"result":false,"result_text":"Contect timeout , please try again"}';
+		$response = '{"result":false,"result_text":"'.$error_msg.'"}';
 	}
 	if(empty($response))
 	{
@@ -1014,7 +1015,7 @@ function tt_get_user_by_email($email)
 
 function tt_login_success()
 {
-	global $db, $lang, $theme, $plugins, $mybb, $session, $settings, $cache, $time, $mybbgroups, $mobiquo_config,$user;
+	global $db, $lang, $theme, $plugins, $mybb, $session, $settings, $cache, $time, $mybbgroups, $mobiquo_config,$user,$register;
 	if($user['coppauser'])
     {
 		error($lang->error_awaitingcoppa);
@@ -1046,17 +1047,20 @@ function tt_login_success()
 	foreach($groups as $group){
 		$xmlgroups[] = new xmlrpcval($group, "string");
 	}
-	update_push();
+	tt_update_push();
 	if ($settings['maxattachments'] == 0) $settings['maxattachments'] = 100;
-	$push_type = array();
-	$userPushType = tt_get_user_push_type($mybb->user['uid']);
-	foreach ($userPushType as $name=>$value)
-	{
-		$push_type[] = new xmlrpcval(array(
-			'name'  => new xmlrpcval($name,'string'),
-			'value' => new xmlrpcval($value,'boolean'),                    
-			), 'struct');
-	}
+	
+	$userPushType = array('pm' => 1,'newtopic' => 1,'sub' => 1,'tag' => 1,'quote' => 1);
+    $push_type = array();
+    
+ 	foreach ($userPushType as $name=>$value)
+    {
+    	$push_type[] = new xmlrpcval(array(
+            'name'  => new xmlrpcval($name,'string'),
+    		'value' => new xmlrpcval($value,'boolean'),                    
+            ), 'struct');
+    }   
+    
 	$result = array(
 		'result'            => new xmlrpcval(true, 'boolean'),
 		'result_text'       => new xmlrpcval('', 'base64'),
@@ -1066,6 +1070,7 @@ function tt_login_success()
 		'icon_url'          => new xmlrpcval(absolute_url($mybb->user['avatar']), 'string'),
 		'post_count'        => new xmlrpcval(intval($mybb->user['postnum']), 'int'),
 		'usergroup_id'      => new xmlrpcval($xmlgroups, 'array'),
+	    'ignored_uids'      => new xmlrpcval($mybb->user['ignorelist'],'string'),
 		'max_png_size'      => new xmlrpcval(10000000, "int"),
 		'max_jpg_size'      => new xmlrpcval(10000000, "int"),
 		'max_attachment'    => new xmlrpcval($mybb->usergroup['canpostattachments'] == 1 ? $settings['maxattachments'] : 0, "int"),
@@ -1075,15 +1080,15 @@ function tt_login_success()
 		'can_moderate'      => new xmlrpcval($mybb->usergroup['canmodcp'] == 1, "boolean"),
 		'can_search'        => new xmlrpcval($mybb->usergroup['cansearch'] == 1, "boolean"),
 		'can_whosonline'    => new xmlrpcval($mybb->usergroup['canviewonline'] == 1, "boolean"),
-		'push_type'         => new xmlrpcval($push_type, 'array'),
+		'register'          => new xmlrpcval($register, "boolean"),
+		'push_type'         => new xmlrpcval($push_type, 'array'), 
 	);
-	
 	
 	
 	return new xmlrpcresp(new xmlrpcval($result, 'struct'));
 }
 
-function update_push()
+function tt_update_push()
 {
     global $mybb, $db;
     

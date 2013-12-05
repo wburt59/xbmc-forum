@@ -1,9 +1,20 @@
 <?php
 /**
- * Goodbye Spammer 1.0 - Language File
- * © MattRogowski 2010
- * http://mattrogowski.co.uk
- * You may edit for your own personal forum but must not redistribute it in any form without my permission.
+ * Goodbye Spammer 1.1 - Language File
+
+ * Copyright 2013 Matthew Rogowski
+
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+
+ ** http://www.apache.org/licenses/LICENSE-2.0
+
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
 **/
 
 $l['goodbyespammer'] = "Goodbye Spammer";
@@ -36,8 +47,8 @@ $l['goodbyespammer_delete'] = "Delete User";
 $l['goodbyespammer_delete_desc'] = "Completely delete this user.";
 $l['goodbyespammer_stopforumspam'] = "Submit to StopForumSpam";
 $l['goodbyespammer_stopforumspam_desc'] = "Submit details on this user to the StopForumSpam database.";
-$l['goodbyespammer_submit'] = "Goodbye Spammer!!";
-$l['goodbyespammer_profile'] = "Use the Goodbye Spammer tool on this user.";
+$l['goodbyespammer_submit'] = "Goodbye Spammer!";
+$l['goodbyespammer_profile'] = "Use Goodbye Spammer on {1}.";
 $l['goodbyespammer_success'] = "The selected actions have been performed.";
 $l['goodbyespammer_invalid_user'] = "You have specified an invalid user.";
 $l['goodbyespammer_modlog'] = "Used Goodbye Spammer on {1}";
