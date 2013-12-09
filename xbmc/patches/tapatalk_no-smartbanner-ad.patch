@@ -1,0 +1,34 @@
+From 90459a3a31a31e83119941209b2c5363a3c26c8a Mon Sep 17 00:00:00 2001
+From: da-anda <da-anda@xbmc.org>
+Date: Sat, 18 Jan 2014 14:29:43 +0100
+Subject: [PATCH] [Task] don't add tapatalk smart banner crap
+
+---
+ inc/plugins/tapatalk.php | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/inc/plugins/tapatalk.php b/inc/plugins/tapatalk.php
+index 40ee76d..2383224 100644
+--- a/inc/plugins/tapatalk.php
++++ b/inc/plugins/tapatalk.php
+@@ -531,6 +531,9 @@ function tapatalk_pre_output_page(&$page)
+ {
+     global $mybb;
+     $settings = $mybb->settings;
++
++    $app_ads_enable = $settings['tapatalk_app_ads_enable'];
++	if (!$app_ads_enable) return; // don't add bloat to html code if apps are not wanted suckers
+ 	
+     $app_forum_name = $settings['homename'];
+     $board_url = $mybb->settings['bburl'];
+@@ -546,7 +549,6 @@ function tapatalk_pre_output_page(&$page)
+     
+     //full screen ads
+     $api_key = $settings['tapatalk_push_key'];
+-    $app_ads_enable = $settings['tapatalk_app_ads_enable'];
+     if (file_exists($tapatalk_dir . '/smartbanner/head.inc.php'))
+         include($tapatalk_dir . '/smartbanner/head.inc.php');
+ 	
+-- 
+1.8.4.msysgit.0
+

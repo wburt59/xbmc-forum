@@ -424,7 +424,7 @@ function process_post($post, $returnHtml = false)
 	$post = str_replace("&#36;", '$', $post);
     $post = trim($post);
     // remove link on img
-    $post = preg_replace('/\[url=[^\]]*?\]\s*(\[img\].*?\[\/img\])\s*\[\/url\]/si', '$1', $post);
+    //$post = preg_replace('/\[url=[^\]]*?\]\s*(\[img\].*?\[\/img\])\s*\[\/url\]/si', '$1', $post);
     
 	if(!empty($mybb->settings['tapatalk_custom_replace']))
 	{
@@ -443,6 +443,7 @@ function process_post($post, $returnHtml = false)
 			}	
 		}
 	}
+	
     return $post;
 }
 function process_page($start_num, $end)
@@ -945,19 +946,24 @@ function tt_register_verify($tt_token,$tt_code)
 	{
 		$mybb->settings['tapatalk_push_key'] = '';
 	}
-	$url = "http://directory.tapatalk.com/au_reg_verify.php?token=".$tt_token."&code=".$tt_code."&key=" . $mybb->settings['tapatalk_push_key'];
-	$board_url = $mybb->settings['bburl'];
-	$url = $url . '&url=' . urlencode($board_url);
 	
-	$error_msg = '';
-	$response = getContentFromRemoteServer($url, 10 , $error_msg);
+	$url = "http://directory.tapatalk.com/au_reg_verify.php";
+    $data = array(
+        'token' => $tt_token,
+        'code' => $tt_code,
+        'key' => $mybb->settings['tapatalk_push_key'],
+        'url' => $mybb->settings['bburl']
+    );
+    $error_msg = '';
+    $response = getContentFromRemoteServer($url, 10, $error_msg, 'POST', $data);
+    
 	if(!empty($error_msg))
 	{
 		$response = '{"result":false,"result_text":"'.$error_msg.'"}';
 	}
 	if(empty($response))
 	{
-		$response = '{"result":false,"result_text":"Contect timeout , please try again"}';
+		$response = '{"result":false,"result_text":"Connect timeout , please try again"}';
 	}
 	$result = json_decode($response);
 	return $result;
@@ -1005,6 +1011,19 @@ function tt_get_user_by_email($email)
 	global $mybb, $db;
 
 	$query = $db->simple_select("users", "*", "email = '".$db->escape_string($email)."'");
+	$user_info = $db->fetch_array($query);
+	if(empty($user_info))
+	{
+		return false;
+	}
+	return $user_info;
+}
+
+function tt_get_user_id_by_name($username)
+{
+	global $mybb, $db;
+
+	$query = $db->simple_select("users", "*", "username = '".$db->escape_string($username)."'");
 	$user_info = $db->fetch_array($query);
 	if(empty($user_info))
 	{

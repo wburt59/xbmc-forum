@@ -25,6 +25,7 @@ $plugins->add_hook('postbit','tapatalk_postbit');
 $plugins->add_hook('postbit_prev','tapatalk_postbit');
 $plugins->add_hook('postbit_pm','tapatalk_postbit');
 $plugins->add_hook('postbit_announcement','tapatalk_postbit');
+$plugins->add_hook('parse_message_start', "tapatalk_parse_message");
 function tapatalk_info()
 {
     /**
@@ -44,7 +45,7 @@ function tapatalk_info()
         "website"       => "http://tapatalk.com",
         "author"        => "Quoord Systems Limited",
         "authorsite"    => "http://tapatalk.com",
-        "version"       => "3.6.0",
+        "version"       => "3.7.2",
         "guid"          => "e7695283efec9a38b54d8656710bf92e",
         "compatibility" => "16*"
     );
@@ -81,6 +82,7 @@ function tapatalk_install()
               data_type char(20) NOT NULL DEFAULT '',
               title varchar(200) NOT NULL DEFAULT '',
               data_id int(10) NOT NULL DEFAULT '0',
+              topic_id int(10) NOT NULL DEFAULT '0',
               create_time int(11) unsigned NOT NULL DEFAULT '0',
               PRIMARY KEY (push_id),
               KEY user_id (user_id),
@@ -126,12 +128,6 @@ function tapatalk_install()
             'optionscode'   => 'text',
             'value'         => 'member.php?action=register'
         ),
-        'allow_register' => array(
-            'title'         => 'In-app Registration',
-            'description'   => 'Allows Tapatalk users to create new account, change password and update email address in-app.',
-            'optionscode'   => 'onoff',
-            'value'         => '1'
-        ),
         'directory' => array(
             'title'         => 'Tapatalk Plugin Directory',
             'description'   => 'Never change it if you did not rename the Tapatalk plugin directory. And the default value is \'mobiquo\'. If you renamed the Tapatalk plugin directory, you also need to update the same setting in Tapatalk Forum Owner Area.',
@@ -169,6 +165,13 @@ function tapatalk_install()
             'description'   => '',
             'optionscode'   => 'php',
             'value'         => '0',
+        ),
+        
+        'app_ads_enable' => array(
+        	'title'         => 'Mobile Welcome Screen',
+            'description'   => 'Tapatalk will show a one time welcoming screen to mobile users to download the free app, the screen will contain your forum logo and branding only, with a button to get the free app. ',
+            'optionscode'   => 'onoff',
+            'value'         => '1',
         )
     );
 	
@@ -246,7 +249,7 @@ function tapatalk_is_installed()
 function tapatalk_uninstall()
 {
     global $mybb, $db;
-    if(($mybb->settings['tapatalk_datakeep'] == 'delete') && $db->table_exists('tapatalk_push_data'))
+    if($db->table_exists('tapatalk_push_data') && ($mybb->settings['tapatalk_datakeep'] == 'delete' || !$db->field_exists('topic_id', 'tapatalk_push_data')))
     {
         $db->drop_table('tapatalk_push_data');
     }
@@ -509,7 +512,7 @@ function tapatalk_online_end()
     $temp_online = $online_rows;
     
     $str = '&nbsp;<a title="On Tapatalk" href="http://www.tapatalk.com" target="_blank" ><img src="'.$mybb->settings['bburl'].'/'.$mybb->settings['tapatalk_directory'].'/images/tapatalk-online.png" style="vertical-align:middle"></a>';
-    $online_rows = preg_replace('/<a href="(.*)">(.*)\[tapatalk_user\](<\/em><\/strong><\/span>|<\/strong><\/span>|<\/span>|<\/b><\/span>|\s*)<\/a>/Usi', '<a href="$1">$2$3</a>'.$str, $online_rows);
+    $online_rows = preg_replace('/<a href="(.*)">(.*)\[tapatalk_user\](<\/em><\/strong><\/span>|<\/strong><\/span>|<\/span>|<\/b><\/span>|<\/s>|\s*)<\/a>/Usi', '<a href="$1">$2$3</a>'.$str, $online_rows);
 	if(empty($online_rows))
     {
         $online_rows = str_replace('[tapatalk_user]','',$temp_online);
@@ -528,23 +531,26 @@ function tapatalk_pre_output_page(&$page)
 {
     global $mybb;
     $settings = $mybb->settings;
-	
-    $app_banner_message = $settings['tapatalk_app_banner_msg'];
-    if (!$app_banner_message) return;
 
+    $app_ads_enable = $settings['tapatalk_app_ads_enable'];
+	if (!$app_ads_enable) return; // don't add bloat to html code if apps are not wanted suckers
+	
     $app_forum_name = $settings['homename'];
     $board_url = $mybb->settings['bburl'];
-    $tapatalk_dir = $mybb->settings['tapatalk_directory'];  // default as 'mobiquo'
-    $tapatalk_dir_url = $board_url.'/'.$tapatalk_dir;
+    $tapatalk_dir = MYBB_ROOT.$mybb->settings['tapatalk_directory'];  // default as 'mobiquo'
+    $tapatalk_dir_url = $board_url.'/'.$mybb->settings['tapatalk_directory'];
     $is_mobile_skin = 0;
     $app_location_url = tapatalk_get_url();
     
+    $app_banner_message = $settings['tapatalk_app_banner_msg'];
     $app_ios_id = $settings['tapatalk_app_ios_id'];
     $app_android_id = $settings['tapatalk_android_url'];
     $app_kindle_url = $settings['tapatalk_kindle_url'];
     
-    if (file_exists(MYBB_ROOT.$tapatalk_dir . '/smartbanner/head.inc.php'))
-        include(MYBB_ROOT.$tapatalk_dir . '/smartbanner/head.inc.php');
+    //full screen ads
+    $api_key = $settings['tapatalk_push_key'];
+    if (file_exists($tapatalk_dir . '/smartbanner/head.inc.php'))
+        include($tapatalk_dir . '/smartbanner/head.inc.php');
 	
     $str = $app_head_include;
     $tapatalk_smart_banner_body = " 
@@ -1081,8 +1087,13 @@ function tt_insert_push_data($data)
 		'data_id' => $data['subid'],
 		'create_time' => $data['dateline']		
     );
+    if($data['type'] != 'pm')
+    {
+    	$sql_data['topic_id'] = $data['id'];
+    }
 	$db->insert_query('tapatalk_push_data', $sql_data);
 }
+
 function tt_push_clean($str)
 {
 	global $db;
@@ -1129,4 +1140,19 @@ function ingnore_user_push($user)
 	}
     define("TAPATALK_PUSH".$user['uid'], 1);
     return false;    
+}
+
+function tapatalk_parse_message(&$message)
+{
+	if(strstr($_SERVER['PHP_SELF'],'mobiquo.php'))
+	{
+		return ;		
+	}
+	//add tapatalk thumbnail
+    $message = preg_replace_callback('/(\[img\])(http:\/\/img.tapatalk.com\/d\/[0-9]{2}\/[0-9]{2}\/[0-9]{2})(.*?)(\[\/img\])/i',
+            create_function(
+                '$matches',
+                'return \'[url=http://tapatalk.com/tapatalk_image.php?img=\'.base64_encode($matches[2].\'/original\'.$matches[3]).\']\'.$matches[1].$matches[2].\'/thumbnail\'.$matches[3].$matches[4].\'[/url]\';'
+            ),
+    $message);
 }

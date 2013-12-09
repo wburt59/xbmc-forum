@@ -34,11 +34,18 @@ function get_config_func()
     {
         $config_list['reg_url'] = new xmlrpcval(basic_clean($mybb->settings['tapatalk_reg_url']), 'string');
     }
-    if(version_compare($mybb->version, '1.6.9','>=') && $mybb->settings['tapatalk_allow_register'])
+    if(version_compare($mybb->version, '1.6.9','>=') && !$mybb->settings['disableregs'])
     {
     	$config_list['inappreg'] = new xmlrpcval(1, 'string');
     }
     
+	if (!function_exists('curl_init') && !@ini_get('allow_url_fopen'))
+	{
+	    $mobiquo_config['sign_in'] = 0;
+	    $mobiquo_config['inappreg'] = 0;
+	    $mobiquo_config['inappsignin'] = 0;
+	}
+	
     foreach($mobiquo_config as $key => $value){
         if(!array_key_exists($key, $config_list) && $key != 'thlprefix'){
             $config_list[$key] = new xmlrpcval($value, 'string');
@@ -62,6 +69,9 @@ function get_config_func()
     }
     
     $config_list['min_search_length'] = new xmlrpcval(intval($mybb->settings['minsearchword']), 'int');
+    if(!empty($mybb->settings['tapatalk_push_key'])) {
+    	$config_list['api_key'] = new xmlrpcval(md5($mybb->settings['tapatalk_push_key']), 'string');
+    }
     
     $response = new xmlrpcval($config_list, 'struct');
     return new xmlrpcresp($response);
