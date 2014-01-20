@@ -546,15 +546,16 @@ function upload_attachment($attachment, $update_attachment=false)
 
 		$mime = "";
 		$file_path = $mybb->settings['uploadspath']."/".$filename;
+		$abs_file_path = substr($file_path, 0, 1) == '/' ? $file_path : MYBB_ROOT . $file_path;
 		if(function_exists("finfo_open"))
 		{
 			$file_info = finfo_open(FILEINFO_MIME);
-			list($mime, ) = explode(';', finfo_file($file_info, MYBB_ROOT.$file_path), 1);
+			list($mime, ) = explode(';', finfo_file($file_info, $abs_file_path), 1);
 			finfo_close($file_info);
 		}
 		else if(function_exists("mime_content_type"))
 		{
-			$mime = mime_content_type(MYBB_ROOT.$file_path);
+			$mime = mime_content_type($abs_file_path);
 		}
 
 		if(!is_array($img_dimensions) || ($img_dimensions[2] != $img_type && !in_array($mime, $supported_mimes)))
