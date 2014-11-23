@@ -4,7 +4,7 @@
 		<templateset><![CDATA[2]]></templateset>
 		<editortheme><![CDATA[default]]></editortheme>
 		<imgdir><![CDATA[images]]></imgdir>
-		<logo><![CDATA[images/xbmc/xbmc-lettering.png]]></logo>
+		<logo><![CDATA[images/xbmc/logo-sbs-black.png]]></logo>
 		<tablespace><![CDATA[4]]></tablespace>
 		<borderwidth><![CDATA[1]]></borderwidth>
 	</properties>

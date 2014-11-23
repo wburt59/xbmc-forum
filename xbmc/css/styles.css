@@ -17,7 +17,7 @@ body { background:#efefef; line-height:normal; font-family: Verdana, Arial, Helv
  *******************************************/
 .no-js .noJShide {display:none}
 
-h1 {margin:0.8em 0 0.6em; line-height:1.1em; color:#3D4F72; font-family:Arial, Helvetica, sans-serif; font-size:200%; font-weight:normal}
+h1 {margin:0.8em 0 0.6em; line-height:1.1em; color:#333; font-family:Arial, Helvetica, sans-serif; font-size:200%; font-weight:normal}
 .smalltext {font-size: 85%}
 .largetext { font-size: 116%; font-weight: bold;}
 .clear { clear: both; }
@@ -39,62 +39,27 @@ label img {margin-right:0.8em; vertical-align:middle; margin-left:-0.2em}
 #content a:hover {text-decoration:underline}
 
 /** Buttons ********************************/
-.button, .button-layout2, button {font-family:inherit; position:relative; cursor:pointer; text-transform:uppercase; letter-spacing:normal; line-height:2em; font-weight:bold; padding:0 1.5em; color:#fff !important; text-decoration:none !important; white-space:nowrap; border:1px solid #9BABCC; vertical-align:middle;
-background: #3D4F72;
-background: -moz-linear-gradient(top, #697999 0%, #3d4f72 100%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#697999), color-stop(100%,#3d4f72));
-background: -webkit-linear-gradient(top, #697999 0%,#3d4f72 100%);
-background: -o-linear-gradient(top, #697999 0%,#3d4f72 100%);
-background: -ms-linear-gradient(top, #697999 0%,#3d4f72 100%);
-background: linear-gradient(top, #697999 0%,#3d4f72 100%);
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#697999', endColorstr='#3d4f72',GradientType=0 );
-}
+.button, .button-layout2, button {font-family:inherit; position:relative; cursor:pointer; text-transform:uppercase; letter-spacing:normal; line-height:2em; font-weight:bold; padding:0 1.5em; color:#fff !important; text-decoration:none !important; white-space:nowrap; border:1px solid #1b88b3; vertical-align:middle; background:#31afe1;}
 a.button, a.button-layout2, label.button, label.button-layout2 { display:inline; display:-moz-inline-box; display:inline-block}
-.button, button {text-shadow: #333 0 -1px 0 }
+.button, button {text-shadow: #125d7a 0 -1px 2px }
 .button-layout2 {text-shadow: #999 0 -1px 0 }
 .button img, button img {border:0;vertical-align:middle}
 .button input, input.button, button {/*font-size:1em;*/ line-height:normal !important; height:1.95em; white-space:nowrap; vertical-align:bottom; width:auto; overflow:visible}
 
-.button-layout2 {border:1px solid #3D4F72;
-background: #9babcc;
-background: -moz-linear-gradient(top, #9babcc 0%, #697999 100%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#9babcc), color-stop(100%,#697999));
-background: -webkit-linear-gradient(top, #9babcc 0%,#697999 100%);
-background: -o-linear-gradient(top, #9babcc 0%,#697999 100%);
-background: -ms-linear-gradient(top, #9babcc 0%,#697999 100%);
-background: linear-gradient(top, #9babcc 0%,#697999 100%);
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#9babcc', endColorstr='#697999',GradientType=0 );
-}
-.button-disabled {background-color:#999}
+.button-layout2 {border:1px solid #31afe1; background: #1880a8;}
+.button-disabled {background-color:#999 !important}
 .button-small, tfoot .button, thead .button, .caption .button {font-size:85%;padding:0 1em;font-family:sans-serif;line-height:1.7em}
 .post-functions .button {font-size:76%;font-size:x-small}
 
-.button:hover, button:hover {color:#fff !important; text-shadow: #3D4F72 0 -1px 0; box-shadow:0 0 3px #ccc;
-background: #9babcc;
-background: -moz-linear-gradient(top, #9babcc 0%, #697999 100%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#9babcc), color-stop(100%,#697999));
-background: -webkit-linear-gradient(top, #9babcc 0%,#697999 100%);
-background: -o-linear-gradient(top, #9babcc 0%,#697999 100%);
-background: -ms-linear-gradient(top, #9babcc 0%,#697999 100%);
-background: linear-gradient(top, #9babcc 0%,#697999 100%);
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#9babcc', endColorstr='#697999',GradientType=0 );
-}
-.button-layout2:hover {border-color:#3D4F72;
-background: #3D4F72;
-background: -moz-linear-gradient(top, #697999 0%, #3d4f72 100%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#697999), color-stop(100%,#3d4f72));
-background: -webkit-linear-gradient(top, #697999 0%,#3d4f72 100%);
-background: -o-linear-gradient(top, #697999 0%,#3d4f72 100%);
-background: -ms-linear-gradient(top, #697999 0%,#3d4f72 100%);
-background: linear-gradient(top, #697999 0%,#3d4f72 100%);
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#697999', endColorstr='#3d4f72',GradientType=0 )
+.button:hover, button:hover {color:#fff !important; text-shadow: #31afe1 0 -1px 0; box-shadow:0 0 3px #ccc; background: #1880a8;}
+.button-layout2:hover {border-color:#1b88b3;background: #31afe1;
 }
 
 /** Tables ********************************/
 table { border-spacing:0; border-collapse:collapse; empty-cells:show}
 td {vertical-align:top; padding:4px;}
 
-thead th, .tcat { background: #9BABCC; color: #000000; font-size: 86%; padding: 2px 4px;}
+thead th, .tcat { background: #afafaf; color: #000000; font-size: 86%; padding: 2px 4px;}
 thead th a:link, .tcat a:link, thead th a:visited, .tcat a:visited { color: #000000;}
 thead th a:hover, thead th a:active, .tcat a:hover, .tcat a:active {	color: #666;}
 
@@ -104,15 +69,15 @@ thead th a:hover, thead th a:active, .tcat a:hover, .tcat a:active {	color: #666
 .trow_selected td { background: #FFFBD9;}
 .trow_sep { background: #999; color: #fff; font-size: 12px; font-weight: bold;}
 
-tfoot td, .tfoot { background: #3D4F72; color: #ffffff;}
+tfoot td, .tfoot { background: #666; color: #ffffff;}
 tfoot a, .tfoot a:link, tfoot a:visited, .tfoot a:visited { color: #ffffff;}
 
 table.tborder {border-width:2px}
-.tborder {width: 100%; margin: auto auto; border: 1px solid #3D4F72;}
+.tborder {width: 100%; margin: auto auto; border: 1px solid #333;}
 .tborder td, .tborder th {border:1px solid #ccc}
 .tborder table td, .tborder table th {border:none}
 
-caption, .thead, .caption { background: #3D4F72 !important; color: #ffffff; text-align:left;}
+caption, .thead, .caption { background: #333 !important; color: #fff; text-align:left;}
 caption {line-height:1.1em; }
 caption, .caption {padding:8px}
 caption a, .caption a, .thead a, caption a:visited, .caption a:visited, .thead a:visited {color:#fff; text-decoration:underline}
@@ -124,25 +89,26 @@ caption a:hover, .caption a:hover, .thead a:hover {text-decoration:none}
  *******************************************/
  
 /** Global Menu bar ***********************/
-#topBar {background:#fff; color:#666; text-align:center; float:left; position:absolute; position:fixed; top:0; left:0; right:0; height:1.8em; line-height:1.8em; font-size:90%; z-index:9999}
+#topBar {background:#333; color:#31afe1; text-align:center; float:left; position:absolute; position:fixed; top:0; left:0; right:0; height:1.8em; line-height:1.8em; font-size:90%; z-index:9999}
 #topBar ul {margin:0 auto;padding:0;text-align:left;list-style:none; text-transform:uppercase;}
-#topBar li {float:left;border-right:1px solid #efefef;position:relative;overflow:visible}
-#topBar li.first {border-left:1px solid #efefef}
-#topBar a {display:block; float:left; padding:0 1em; color:#999;}
-#topBar a:visited {color:#999;}
-#topBar a:hover {background-color:#9BABCC;color:#fff}
+#topBar li {float:left;border-right:1px solid #666;position:relative;overflow:visible}
+#topBar li.first {border-left:1px solid #666}
+#topBar a {display:block; float:left; padding:0 1em; color:#31afe1;}
+#topBar a:visited {color:#31afe1;}
+#topBar a:hover, #boardMenu > li:hover > a {background-color:#31afe1;color:#fff !important;}
 
-#topBar ul ul {display:none; width:15em; position:absolute; top:1.8em; left:-1px; background:#fff; border:1px solid #ccc; z-index:1}
-#topBar ul ul li {display:block; float:none; border:none; border-bottom:1px solid #ccc}
-#topBar ul ul a {float:none}
+#topBar ul ul {display:none; width:15em; position:absolute; top:1.8em; left:-1px; background:#31afe1; color:#fff; z-index:1}
+#topBar ul ul li {display:block; float:none; border:none;}
+#topBar ul ul a {float:none; color:#fff;}
+#topBar ul ul a:visited {color:#fff;}
 #topBar .last ul {left:auto; right:-1px}
 #topBar li:hover ul {display:block;}
-#topBar li:hover a {background-color:#9BABCC; z-index:2}
+#topBar li:hover a {z-index:2}
 #topBar li:hover li a {background:none}
-#topBar li:hover li a:hover {background:#9BABCC}
+#topBar li li a:hover {background:#fff !important; color:#333 !important;}
 
 /** Footer menu ***********************/
-.bottommenu { background: #efefef; color: #000000; border: 1px solid #3D4F72; padding: 10px; clear:both; margin:1em 0;}
+.bottommenu { background: #efefef; color: #000000; border: 1px solid #31afe1; padding: 10px; clear:both; margin:1em 0;}
 
 /** Breadcrumb ***********************/
 #breadcrumb {padding:0;margin:0 0 -1px 0;list-style:none;font-size:86% !important; font-family:Tahoma, Geneva, sans-serif;background:#dfdfdf;float:left;width:100%}
@@ -180,10 +146,10 @@ caption a:hover, .caption a:hover, .thead a:hover {text-decoration:none}
 
 /** Pagination *******************************/
 .pagination {display:block; margin:1em 0}
-.pagination_current, .pagination a { display:-moz-inline-box; display:inline-block; padding: 0 0.5em; line-height:1.7em; border: 1px solid #3D4F72;}
-.pagination a:hover {text-decoration:none !important;background:#9BABCC;color:#fff}
+.pagination_current, .pagination a { display:-moz-inline-box; display:inline-block; padding: 0 0.5em; line-height:1.7em; border: 1px solid #31afe1;}
+.pagination a:hover {text-decoration:none !important;background:#333;color:#fff}
 .pagination .pages { font-weight: bold;}
-.pagination .pagination_current { background: #3D4F72; font-weight: bold; color: #fff; }
+.pagination .pagination_current { background: #31afe1; font-weight: bold; color: #fff; }
 .pagination_breadcrumb { background-color: #f5f5f5; border: 1px solid #fff; outline: 1px solid #ccc; padding: 5px; margin-top: 5px; font-weight: normal; white-space: nowrap;}
 .pagination_breadcrumb_link { vertical-align: middle; cursor: pointer;}
 
@@ -194,7 +160,7 @@ caption a:hover, .caption a:hover, .thead a:hover {text-decoration:none}
  * MyBB MISC
  *******************************************/
 .editor { background: #f1f1f1; border: 1px solid #ccc;}
-.editor_control_bar { background: #fff; border: 1px solid #3D4F72;}
+.editor_control_bar { background: #fff; border: 1px solid #31afe1;}
 
 .autocomplete { background: #fff; border: 1px solid #000; color: black;}
 .autocomplete_selected { background: #adcee7; color: #000;}
@@ -288,9 +254,9 @@ div.error.ul { margin-left: 24px; }
 #mainNav {float:left}
 #boardMenu {float:right}
 #boardMenu img {vertical-align:middle; margin-right:5px}
-#boardMenu .link-profile {font-weight:bold;color:#3D4F72 !important; padding-left:20px; background-image: url('../images/arrow-down.png'); background-position: 5px 50%; background-repeat:no-repeat}
-#boardMenu .pm-status-new, #boardMenu .pm-status-unread {background:#FFF6BF; color:#3D4F72; text-decoration:blink}
-#boardMenu .link-logout {background:#3D4F72 !important; color:#fff; font-weight:bold}
+#boardMenu .link-profile {font-weight:bold;color:#fff !important; padding-left:20px; background-image: url('../images/arrow-down.png'); background-position: 5px 50%; background-repeat:no-repeat}
+#boardMenu .pm-status-new, #boardMenu .pm-status-unread {background:#FFF6BF; text-decoration:blink}
+#boardMenu .link-logout {background:#333 !important; color:#fff; font-weight:bold}
 
 #topFunctionBar {margin:0;padding:0;list-style:none;float:left;}
 #topFunctionBar li {margin:0 1em 0;padding:0;display:inline}
