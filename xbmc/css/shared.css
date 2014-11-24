@@ -24,8 +24,8 @@ body { margin: 0; font-size:1em; line-height: 1.4; }
    Links
    ========================================================================== */
 
-a { color: #1e86af; text-decoration:none }
-a:visited {color:#1e86af;}
+a { color: #06749f; text-decoration:none }
+a:visited {color:#06749f;}
 a:hover { color: #000; }
 a:focus { outline: thin dotted; }
 
