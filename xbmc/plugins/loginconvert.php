@@ -24,7 +24,7 @@ function loginconvert_info()
 		"description"		=> "Converts passwords of the vB3 XBMC forum. To be used in conjunction with the MyBB Merge System.",
 		"website"			=> "http://www.mybb.com",
 		"author"				=> "MyBB Group, TeamXBMC",
-		"authorsite"		=> "http://www.xbmc.org",
+		"authorsite"		=> "http://kodi.tv/",
 		"version"				=> "1.0",
 		"guid"					=> "",
 		"compatibility"	=> "16*",

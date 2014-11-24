@@ -1149,10 +1149,10 @@
 	<div id="topBar" class="dropShadow">
 		<div class="containerWidth">
 			<ul id="globalNav">
-				<li class="first"><a href="http://www.xbmc.org/">Blog</a></li>
-				<li><a href="http://www.xbmc.org/download/">Download</a></li>
-				<li><a href="http://wiki.xbmc.org/">Wiki</a></li>
-				<li class="last"><a href="http://trac.xbmc.org/">Bugtracker</a></li>
+				<li class="first"><a href="http://kodi.tv/">Blog</a></li>
+				<li><a href="http://kodi.tv/download/">Download</a></li>
+				<li><a href="http://kodi.wiki/">Wiki</a></li>
+				<li class="last"><a href="http://trac.kodi.tv/">Bugtracker</a></li>
 			</ul>
 			<ul id="boardMenu">
 				<li class="first"><a href="{$mybb->settings['bburl']}/search.php"><img src="{$theme['imgdir']}/toplinks/search.gif" alt="" title="" />{$lang->toplinks_search}</a></li>
@@ -1212,8 +1212,8 @@
 </table>]]></template>
 		<template name="postbit_quickdelete" version="0"><![CDATA[<a href="editpost.php?pid={$post['pid']}" onclick="Thread.deletePost({$post['pid']}); return false;" id="quick_delete_{$post['pid']}" class="button button-small link-quickDelete noJShide" title="{$lang->postbit_qdelete_title}"><span class="icon"></span>{$lang->postbit_qdelete}</a>]]></template>
 		<template name="forumdisplay_newthread" version="0"><![CDATA[<a href="newthread.php?fid={$fid}" class="button link-postThread"><span class="icon"></span>{$lang->post_thread}</a>]]></template>
-		<template name="headerinclude" version="1606"><![CDATA[<link rel="shortcut icon" href="http://xbmc.org/favicon.ico" type="image/x-ico; charset=binary">
-<link rel="icon" href="http://xbmc.org/favicon.ico" type="image/x-ico; charset=binary">
+		<template name="headerinclude" version="1606"><![CDATA[<link rel="shortcut icon" href="http://kodi.tv/favicon.ico" type="image/x-ico; charset=binary">
+<link rel="icon" href="http://kodi.tv/favicon.ico" type="image/x-ico; charset=binary">
 
 <link rel="alternate" type="application/rss+xml" title="{$lang->latest_threads} (RSS 2.0)" href="{$mybb->settings['bburl']}/syndication.php" />
 <link rel="alternate" type="application/atom+xml" title="{$lang->latest_threads} (Atom 1.0)" href="{$mybb->settings['bburl']}/syndication.php?type=atom1.0" />

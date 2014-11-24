@@ -2,7 +2,7 @@
 /**
  * Copyright 2012 Team XBMC, All Rights Reserved
  *
- * Website: http://xbmc.org
+ * Website: http://kodi.tv/
  * Author: da-anda
  *
  */
@@ -64,9 +64,9 @@ function xbmc_info()
 	return array(
 		"name"			=> "XBMC addons",
 		"description"	=> "This plugins contains XBMC specific changes and features for this forum",
-		"website"		=> "http://xbmc.org",
+		"website"		=> "http://kodi.tv/",
 		"author"			=> "Team XBMC",
-		"authorsite"	=> "http://xbmc.org",
+		"authorsite"	=> "http://kodi.tv/",
 		"version"		=> "0.41",
 		"guid" 			=> "",
 		"compatibility" => "*"
