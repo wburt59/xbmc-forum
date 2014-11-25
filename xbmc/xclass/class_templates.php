@@ -2,7 +2,7 @@
 /**
  * Copyright 2012 Team XBMC, All Rights Reserved
  *
- * Website: http://xbmc.org
+ * Website: http://kodi.tv/
  * Author: da-anda
  */
 

@@ -1,5 +1,5 @@
 From dd64f42b2af4c012647188955ec0e14aad794971 Mon Sep 17 00:00:00 2001
-From: da-anda <da-anda@xbmc.org>
+From: da-anda <da-anda@kodi.tv>
 Date: Mon, 20 Jan 2014 21:07:24 +0100
 Subject: [PATCH] [bugfix][mybb] fix upload function when using an absolute
  path to the upload folder
