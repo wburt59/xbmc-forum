@@ -1218,8 +1218,8 @@
 <link rel="alternate" type="application/rss+xml" title="{$lang->latest_threads} (RSS 2.0)" href="{$mybb->settings['bburl']}/syndication.php" />
 <link rel="alternate" type="application/atom+xml" title="{$lang->latest_threads} (Atom 1.0)" href="{$mybb->settings['bburl']}/syndication.php?type=atom1.0" />
 <meta http-equiv="Content-Type" content="text/html; charset={$charset}" />
-<meta name="keywords" content="XBMC Media Center, Xbox Media Center, XBMC, Mediaplayer, HTPC, home theater, OpenSource, cross platform, Windows, Linux, Mac, iOS, Android, Apple-TV, ATV, iPhone, iPod, iPad" />
-<meta name="description" content="XBMC Media Center, a free and open source cross-platform media center software, capable of playing back almost all known video, audio and picture formats." />
+<meta name="keywords" content="Kodi Media Center, XBMC Media Center, Xbox Media Center, Kodi, XBMC, Mediaplayer, HTPC, home theater, OpenSource, cross platform, Windows, Linux, Mac, iOS, Android, Apple-TV, ATV, iPhone, iPod, iPad" />
+<meta name="description" content="Kodi Media Center, a free and open source cross-platform media center software, capable of playing back almost all known video, audio and picture formats." />
 
 <script type="text/javascript" src="{$mybb->settings['bburl']}/jscripts/prototype.js?ver=1700"></script>
 <script type="text/javascript" src="{$mybb->settings['bburl']}/xbmc/js/general.js?ver=1603"></script>
