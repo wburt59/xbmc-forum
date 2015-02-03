@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id$
+ * $Id: rss.php 5297 2010-12-28 22:01:14Z Tomm $
  */
 
 /* Redirect traffic using old URI to new URI. */

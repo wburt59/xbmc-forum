@@ -438,6 +438,8 @@ if($mybb->input['action'] == "results")
 		if($message['icon'] > 0 && $icon_cache[$message['icon']])
 		{
 			$icon = $icon_cache[$message['icon']];
+			$icon['path'] = htmlspecialchars_uni($icon['path']);
+			$icon['name'] = htmlspecialchars_uni($icon['name']);
 			$icon = "<img src=\"{$icon['path']}\" alt=\"{$icon['name']}\" align=\"center\" valign=\"middle\" />";
 		}
 		else
@@ -1139,6 +1141,11 @@ if($mybb->input['action'] == "tracking")
 	$plugins->run_hooks("private_tracking_start");
 	$readmessages = '';
 	$unreadmessages = '';
+	
+	if(!$mybb->settings['postsperpage'] || (int)$mybb->settings['postsperpage'] < 1)
+	{
+		$mybb->settings['postsperpage'] = 20;
+	}
 
 	// Figure out if we need to display multiple pages.
 	$perpage = $mybb->settings['postsperpage'];
@@ -2132,6 +2139,8 @@ if(!$mybb->input['action'])
 			if($message['icon'] > 0 && $icon_cache[$message['icon']])
 			{
 				$icon = $icon_cache[$message['icon']];
+				$icon['path'] = htmlspecialchars_uni($icon['path']);
+				$icon['name'] = htmlspecialchars_uni($icon['name']);
 				$icon = "<img src=\"{$icon['path']}\" alt=\"{$icon['name']}\" align=\"center\" valign=\"middle\" />";
 			}
 			else

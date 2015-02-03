@@ -129,7 +129,7 @@ if($mybb->input['action'] == "results")
 		$oppsort = $lang->desc;		
 	}
 	
-	if(!$mybb->settings['threadsperpage'])
+	if(!$mybb->settings['threadsperpage'] || (int)$mybb->settings['threadsperpage'] < 1)
 	{
 		$mybb->settings['threadsperpage'] = 20;
 	}
@@ -404,6 +404,8 @@ if($mybb->input['action'] == "results")
 			if($icon_cache[$thread['icon']])
 			{
 				$posticon = $icon_cache[$thread['icon']];
+				$posticon['path'] = htmlspecialchars_uni($posticon['path']);
+				$posticon['name'] = htmlspecialchars_uni($posticon['name']);
 				$icon = "<img src=\"".$posticon['path']."\" alt=\"".$posticon['name']."\" />";
 			}
 			else
@@ -491,9 +493,9 @@ if($mybb->input['action'] == "results")
 			}
 			$folder .= "folder";
 			
-			if(!$mybb->settings['postsperpage'])
+			if(!$mybb->settings['postsperpage'] || (int)$mybb->settings['postsperpage'] < 1)
 			{
-				$mybb->settings['postperpage'] = 20;
+				$mybb->settings['postsperpage'] = 20;
 			}
 
 			$thread['pages'] = 0;
@@ -687,7 +689,7 @@ if($mybb->input['action'] == "results")
 				$moderated_forums .= ','.$forum['fid'];
 				$test_moderated_forums[$forum['fid']] = $forum['fid'];
 			}
-			$p_unapproved_where = "visible >= 0";
+			$p_unapproved_where = "(visible > 0 OR (visible=0 AND fid IN ({$moderated_forums})))";
 			$t_unapproved_where = "visible < 0 AND fid NOT IN ({$moderated_forums})";
 		}
 		else
@@ -801,6 +803,8 @@ if($mybb->input['action'] == "results")
 			if($icon_cache[$post['icon']])
 			{
 				$posticon = $icon_cache[$post['icon']];
+				$posticon['path'] = htmlspecialchars_uni($posticon['path']);
+				$posticon['name'] = htmlspecialchars_uni($posticon['name']);
 				$icon = "<img src=\"".$posticon['path']."\" alt=\"".$posticon['name']."\" />";
 			}
 			else

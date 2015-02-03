@@ -1531,7 +1531,7 @@ class Moderation
 		$newforum = get_forum($moveto);
 
 		$total_posts = $total_unapproved_posts = $total_threads = $total_unapproved_threads = 0;
-		$query = $db->simple_select("threads", "fid, visible, replies, unapprovedposts, tid", "tid IN ($tid_list)");
+		$query = $db->simple_select("threads", "fid, visible, replies, unapprovedposts, tid", "tid IN ($tid_list) AND closed NOT LIKE 'moved|%'");
 		while($thread = $db->fetch_array($query))
 		{
 			$forum = get_forum($thread['fid']);
@@ -1907,8 +1907,8 @@ class Moderation
 			$new_subject = array(
 				"subject" => $db->escape_string($subject)
 			);
-			$db->update_query("threads", $new_subject, "tid='{$thread['tid']}'", 1);
-			$db->update_query("posts", $new_subject, "tid='{$thread['tid']}' AND replyto='0'", 1);
+			$db->update_query("threads", $new_subject, "tid='{$thread['tid']}'");
+			$db->update_query("posts", $new_subject, "tid='{$thread['tid']}' AND replyto='0'");
 		}
 
 		$arguments = array("tids" => $tids, "format" => $format);

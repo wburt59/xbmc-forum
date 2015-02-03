@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id$
+ * $Id: module_meta.php 5817 2012-04-23 15:54:10Z Tomm $
  */
 
 // Disallow direct access to this file for security reasons

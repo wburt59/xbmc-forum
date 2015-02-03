@@ -254,6 +254,7 @@ if($mybb->input['action'] == "do_profile" && $mybb->request_method == "post")
 
 	$user = array(
 		"uid" => $mybb->user['uid'],
+		"postnum" => $mybb->user['postnum'],
 		"website" => $mybb->input['website'],
 		"icq" => intval($mybb->input['icq']),
 		"aim" => $mybb->input['aim'],
@@ -433,7 +434,7 @@ if($mybb->input['action'] == "profile")
 	while($profilefield = $db->fetch_array($query))
 	{
 		// Does this field have a minimum post count?
-		if($profilefield['postnum'] && $profilefield['postnum'] > $user['postnum'])
+		if($profilefield['postnum'] && $profilefield['postnum'] > $mybb->user['postnum'])
 		{
 			continue;
 		}
@@ -1239,7 +1240,7 @@ if($mybb->input['action'] == "subscriptions")
 	");
 	$threadcount = $db->fetch_field($query, "threads");
 
-	if(!$mybb->settings['threadsperpage'])
+	if(!$mybb->settings['threadsperpage'] || (int)$mybb->settings['threadsperpage'] < 1)
 	{
 		$mybb->settings['threadsperpage'] = 20;
 	}
@@ -1403,6 +1404,8 @@ if($mybb->input['action'] == "subscriptions")
 			if($thread['icon'] > 0 && $icon_cache[$thread['icon']])
 			{
 				$icon = $icon_cache[$thread['icon']];
+				$icon['path'] = htmlspecialchars_uni($icon['path']);
+				$icon['name'] = htmlspecialchars_uni($icon['name']);
 				$icon = "<img src=\"{$icon['path']}\" alt=\"{$icon['name']}\" />";
 			}
 			else
@@ -2782,10 +2785,6 @@ if($mybb->input['action'] == "usergroups")
 			{
 				$description = '';
 			}
-			if(!$usergroup['usertitle'])
-			{
-				// fetch title here
-			}
 			$trow = alt_trow();
 			if($usergroup['candisplaygroup'] == 1 && $usergroup['gid'] == $mybb->user['displaygroup'])
 			{
@@ -2891,7 +2890,7 @@ if($mybb->input['action'] == "attachments")
 	$attachments = '';
 
 	// Pagination
-	if(!$mybb->settings['threadsperpage'])
+	if(!$mybb->settings['threadsperpage'] || (int)$mybb->settings['threadsperpage'] < 1)
 	{
 		$mybb->settings['threadsperpage'] = 20;
 	}
@@ -3286,6 +3285,8 @@ if(!$mybb->input['action'])
 						if($thread['icon'] > 0 && $icon_cache[$thread['icon']])
 						{
 							$icon = $icon_cache[$thread['icon']];
+							$icon['path'] = htmlspecialchars_uni($icon['path']);
+							$icon['name'] = htmlspecialchars_uni($icon['name']);
 							$icon = "<img src=\"{$icon['path']}\" alt=\"{$icon['name']}\" />";
 						}
 						else
@@ -3465,6 +3466,8 @@ if(!$mybb->input['action'])
 				if($thread['icon'] > 0 && $icon_cache[$thread['icon']])
 				{
 					$icon = $icon_cache[$thread['icon']];
+					$icon['path'] = htmlspecialchars_uni($icon['path']);
+					$icon['name'] = htmlspecialchars_uni($icon['name']);
 					$icon = "<img src=\"{$icon['path']}\" alt=\"{$icon['name']}\" />";
 				}
 				else

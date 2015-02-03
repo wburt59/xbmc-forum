@@ -35,7 +35,7 @@ class session
 		{
 			$sid = $db->escape_string($mybb->cookies['sid']);
 			// Load the session
-			$query = $db->simple_select("sessions", "*", "sid='{$sid}' AND ip='".$db->escape_string($this->ipaddress)."'", array('limit' => 1));
+			$query = $db->simple_select("sessions", "*", "sid='{$sid}' AND ip='".$db->escape_string($this->ipaddress)."'");
 			$session = $db->fetch_array($query);
 			if($session['sid'])
 			{
@@ -233,7 +233,7 @@ class session
 		if(!empty($mybb->user['bandate']) && (isset($mybb->user['banlifted']) && !empty($mybb->user['banlifted'])) && $mybb->user['banlifted'] < $time)  // hmmm...bad user... how did you get banned =/
 		{
 			// must have been good.. bans up :D
-			$db->shutdown_query("UPDATE ".TABLE_PREFIX."users SET usergroup='".intval($mybb->user['banoldgroup'])."', additionalgroups='".$mybb->user['oldadditionalgroups']."', displaygroup='".intval($mybb->user['olddisplaygroup'])."' WHERE uid='".$mybb->user['uid']."' LIMIT 1");
+			$db->shutdown_query("UPDATE ".TABLE_PREFIX."users SET usergroup='".intval($mybb->user['banoldgroup'])."', additionalgroups='".$mybb->user['banoldadditionalgroups']."', displaygroup='".intval($mybb->user['banolddisplaygroup'])."' WHERE uid='".$mybb->user['uid']."'");
 			$db->shutdown_query("DELETE FROM ".TABLE_PREFIX."banned WHERE uid='".$mybb->user['uid']."'");
 			// we better do this..otherwise they have dodgy permissions
 			$mybb->user['usergroup'] = $mybb->user['banoldgroup'];
@@ -372,7 +372,7 @@ class session
 		global $mybb, $time, $db, $lang;
 
 		// Fetch the spider preferences from the database
-		$query = $db->simple_select("spiders", "*", "sid='{$spider_id}'", array('limit' => 1));
+		$query = $db->simple_select("spiders", "*", "sid='{$spider_id}'");
 		$spider = $db->fetch_array($query);
 
 		// Set up some defaults
@@ -413,7 +413,7 @@ class session
 			$updated_spider = array(
 				"lastvisit" => TIME_NOW
 			);
-			$db->update_query("spiders", $updated_spider, "sid='{$spider_id}'", 1);
+			$db->update_query("spiders", $updated_spider, "sid='{$spider_id}'");
 		}
 
 		// Update the online data.
@@ -458,7 +458,7 @@ class session
 		$onlinedata['nopermission'] = 0;
 		$sid = $db->escape_string($sid);
 
-		$db->update_query("sessions", $onlinedata, "sid='{$sid}'", 1);
+		$db->update_query("sessions", $onlinedata, "sid='{$sid}'");
 	}
 
 	/**

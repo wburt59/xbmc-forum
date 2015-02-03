@@ -42,6 +42,16 @@ if($mybb->user['uid'] == 0 || $mybb->usergroup['canmodcp'] != 1)
 	error_no_permission();
 }
 
+if(!$mybb->settings['threadsperpage'] || (int)$mybb->settings['threadsperpage'] < 1)
+{
+	$mybb->settings['threadsperpage'] = 20;
+}
+
+if(!$mybb->settings['postsperpage'] || (int)$mybb->settings['postsperpage'] < 1)
+{
+	$mybb->settings['postsperpage'] = 20;
+}
+
 $errors = '';
 // SQL for fetching items only related to forums this user moderates
 $moderated_forums = array();
@@ -226,8 +236,21 @@ if($mybb->input['action'] == "reports")
 
 			$report['postlink'] = get_post_link($report['pid'], $report['tid']);
 			$report['threadlink'] = get_thread_link($report['tid']);
+
 			$report['posterlink'] = get_profile_link($report['postuid']);
+			if(!$report['postuid'])
+			{
+				$report['posterlink'] = $report['postlink'];
+				$report['postusername'] = $lang->guest;
+			}
+
 			$report['reporterlink'] = get_profile_link($report['uid']);
+			if($report['uid'] > 0 && !$report['username'])
+			{
+				$report['reporterlink'] = $report['postlink'];
+				$report['username'] = $lang->na_deleted;
+			}
+
 			$reportdate = my_date($mybb->settings['dateformat'], $report['dateline']);
 			$reporttime = my_date($mybb->settings['timeformat'], $report['dateline']);
 			$report['threadsubject'] = htmlspecialchars_uni($parser->parse_badwords($report['threadsubject']));
@@ -335,7 +358,13 @@ if($mybb->input['action'] == "allreports")
 			$report['posterlink'] = get_profile_link($report['postuid']);
 			$report['postlink'] = get_post_link($report['pid'], $report['tid']);
 			$report['postusername'] = build_profile_link($report['postusername'], $report['postuid']);
+
 			$report['reporterlink'] = get_profile_link($report['uid']);
+			if($report['uid'] > 0 && !$report['username'])
+			{
+				$report['reporterlink'] = $report['postlink'];
+				$report['username'] = $lang->na_deleted;
+			}
 
 			$reportdate = my_date($mybb->settings['dateformat'], $report['dateline']);
 			$reporttime = my_date($mybb->settings['timeformat'], $report['dateline']);
@@ -460,12 +489,11 @@ if($mybb->input['action'] == "modlogs")
 		eval("\$resultspages = \"".$templates->get("modcp_modlogs_multipage")."\";");
 	}
 	$query = $db->query("
-		SELECT l.*, u.username, u.usergroup, u.displaygroup, t.subject AS tsubject, f.name AS fname, p.subject AS psubject
+		SELECT l.*, u.username, u.usergroup, u.displaygroup, t.subject AS tsubject, f.name AS fname
 		FROM ".TABLE_PREFIX."moderatorlog l
 		LEFT JOIN ".TABLE_PREFIX."users u ON (u.uid=l.uid)
 		LEFT JOIN ".TABLE_PREFIX."threads t ON (t.tid=l.tid)
 		LEFT JOIN ".TABLE_PREFIX."forums f ON (f.fid=l.fid)
-		LEFT JOIN ".TABLE_PREFIX."posts p ON (p.pid=l.pid)
 		WHERE 1=1 {$where}{$tflist}
 		ORDER BY {$sortby} {$order}
 		LIMIT {$start}, {$perpage}
@@ -481,24 +509,24 @@ if($mybb->input['action'] == "modlogs")
 		$logitem['profilelink'] = build_profile_link($username, $logitem['uid']);
 		if($logitem['tsubject'])
 		{
-			$information = "<strong>{$lang->thread}</strong> <a href=\"".get_thread_link($logitem['tid'])."\" target=\"_blank\">".htmlspecialchars_uni($logitem['tsubject'])."</a><br />";
+			$information = "<strong>{$lang->thread}:</strong> <a href=\"".get_thread_link($logitem['tid'])."\" target=\"_blank\">".htmlspecialchars_uni($logitem['tsubject'])."</a><br />";
 		}
 		if($logitem['fname'])
 		{
 			$information .= "<strong>{$lang->forum}</strong> <a href=\"".get_forum_link($logitem['fid'])."\" target=\"_blank\">{$logitem['fname']}</a><br />";
 		}
-		if($logitem['psubject'])
-		{
-			$information .= "<strong>{$lang->post}</strong> <a href=\"".get_post_link($logitem['pid'])."#pid{$logitem['pid']}\">".htmlspecialchars_uni($logitem['psubject'])."</a>";
-		}
 
-		// Edited a user?
-		if(!$logitem['tsubject'] || !$logitem['fname'] || !$logitem['psubject'])
+		// Edited a user or managed announcement?
+		if(!$logitem['tsubject'] || !$logitem['fname'])
 		{
 			$data = unserialize($logitem['data']);
 			if($data['uid'])
 			{
 				$information = $lang->sprintf($lang->edited_user_info, htmlspecialchars_uni($data['username']), get_profile_link($data['uid']));
+			}
+			if($data['aid'])
+			{
+				$information = "<strong>{$lang->announcement}:</strong> <a href=\"".get_announcement_link($data['aid'])."\" target=\"_blank\">".htmlspecialchars_uni($data['subject'])."</a>";
 			}
 		}
 
@@ -563,6 +591,7 @@ if($mybb->input['action'] == "do_delete_announcement")
 	$plugins->run_hooks("modcp_do_delete_announcement");
 
 	$db->delete_query("announcements", "aid='{$aid}'");
+	log_moderator_action(array("aid" => $announcement['aid'], "subject" => $announcement['subject']), $lang->announcement_deleted);
 	$cache->update_forumsdisplay();
 
 	redirect("modcp.php?action=announcements", $lang->redirect_delete_announcement);
@@ -688,8 +717,9 @@ if($mybb->input['action'] == "do_new_announcement")
 			'allowmycode' => $db->escape_string($mybb->input['allowmycode']),
 			'allowsmilies' => $db->escape_string($mybb->input['allowsmilies']),
 		);
-
 		$aid = $db->insert_query("announcements", $insert_announcement);
+
+		log_moderator_action(array("aid" => $aid, "subject" => $db->escape_string($mybb->input['title'])), $lang->announcement_added);
 
 		$plugins->run_hooks("modcp_do_new_announcement_end");
 
@@ -969,6 +999,8 @@ if($mybb->input['action'] == "do_edit_announcement")
 		);
 
 		$db->update_query("announcements", $update_announcement, "aid='{$aid}'");
+
+		log_moderator_action(array("aid" => $announcement['aid'], "subject" => $db->escape_string($mybb->input['title'])), $lang->announcement_edited);
 
 		$plugins->run_hooks("modcp_do_edit_announcement_end");
 
@@ -1653,7 +1685,7 @@ if($mybb->input['action'] == "do_editprofile")
 	$user = get_user($mybb->input['uid']);
 	if(!$user['uid'])
 	{
-		error($lang->invalid_user);
+		error($lang->error_nomember);
 	}
 
 	// Check if the current user has permission to edit this user
@@ -1845,7 +1877,7 @@ if($mybb->input['action'] == "editprofile")
 	$user = get_user($mybb->input['uid']);
 	if(!$user['uid'])
 	{
-		error($lang->invalid_user);
+		error($lang->error_nomember);
 	}
 
 	// Check if the current user has permission to edit this user
@@ -2583,7 +2615,7 @@ if($mybb->input['action'] == "ipsearch")
 				$query = $db->query("
 					SELECT COUNT(pid) AS count
 					FROM ".TABLE_PREFIX."posts
-					WHERE {$post_ip_sql}
+					WHERE {$post_ip_sql} AND visible >= 0
 				");
 
 				$post_results = $db->fetch_field($query, "count");
@@ -2734,7 +2766,7 @@ if($mybb->input['action'] == "ipsearch")
 			$query = $db->query("
 				SELECT username AS postusername, uid, subject, pid, tid, ipaddress
 				FROM ".TABLE_PREFIX."posts
-				WHERE {$post_ip_sql}
+				WHERE {$post_ip_sql} AND visible >= 0
 				ORDER BY dateline DESC
 				LIMIT {$post_start}, {$post_limit}
 			");
@@ -3413,12 +3445,11 @@ if(!$mybb->input['action'])
 	}
 
 	$query = $db->query("
-		SELECT l.*, u.username, u.usergroup, u.displaygroup, t.subject AS tsubject, f.name AS fname, p.subject AS psubject
+		SELECT l.*, u.username, u.usergroup, u.displaygroup, t.subject AS tsubject, f.name AS fname
 		FROM ".TABLE_PREFIX."moderatorlog l
 		LEFT JOIN ".TABLE_PREFIX."users u ON (u.uid=l.uid)
 		LEFT JOIN ".TABLE_PREFIX."threads t ON (t.tid=l.tid)
 		LEFT JOIN ".TABLE_PREFIX."forums f ON (f.fid=l.fid)
-		LEFT JOIN ".TABLE_PREFIX."posts p ON (p.pid=l.pid)
 		{$where}
 		ORDER BY l.dateline DESC
 		LIMIT 5
@@ -3435,24 +3466,24 @@ if(!$mybb->input['action'])
 		$logitem['profilelink'] = build_profile_link($username, $logitem['uid']);
 		if($logitem['tsubject'])
 		{
-			$information = "<strong>{$lang->thread}</strong> <a href=\"".get_thread_link($logitem['tid'])."\" target=\"_blank\">".htmlspecialchars_uni($logitem['tsubject'])."</a><br />";
+			$information = "<strong>{$lang->thread}:</strong> <a href=\"".get_thread_link($logitem['tid'])."\" target=\"_blank\">".htmlspecialchars_uni($logitem['tsubject'])."</a><br />";
 		}
 		if($logitem['fname'])
 		{
 			$information .= "<strong>{$lang->forum}</strong> <a href=\"".get_forum_link($logitem['fid'])."\" target=\"_blank\">".htmlspecialchars_uni($logitem['fname'])."</a><br />";
 		}
-		if($logitem['psubject'])
-		{
-			$information .= "<strong>{$lang->post}</strong> <a href=\"".get_post_link($logitem['pid'])."#pid{$logitem['pid']}\">".htmlspecialchars_uni($logitem['psubject'])."</a>";
-		}
 
-		// Edited a user?
-		if(!$logitem['tsubject'] || !$logitem['fname'] || !$logitem['psubject'])
+		// Edited a user or managed announcement?
+		if(!$logitem['tsubject'] || !$logitem['fname'])
 		{
 			$data = unserialize($logitem['data']);
 			if($data['uid'])
 			{
 				$information = $lang->sprintf($lang->edited_user_info, htmlspecialchars_uni($data['username']), get_profile_link($data['uid']));
+			}
+			if($data['aid'])
+			{
+				$information = "<strong>{$lang->announcement}:</strong> <a href=\"".get_announcement_link($data['aid'])."\" target=\"_blank\">".htmlspecialchars_uni($data['subject'])."</a>";
 			}
 		}
 

@@ -44,6 +44,13 @@ if(!empty($mybb->input['pid']) && !$mybb->input['tid'])
 		);
 		$query = $db->simple_select("posts", "tid", "pid=".$mybb->input['pid'], $options);
 		$post = $db->fetch_array($query);
+		
+		if(empty($post))
+		{
+			// post does not exist --> show error message
+			error($lang->error_invalidpost);
+		}
+		
 		$mybb->input['tid'] = $post['tid'];
 	}
 }
@@ -334,7 +341,7 @@ $breadcrumb_multipage = array();
 if($mybb->settings['showforumpagesbreadcrumb'])
 {
 	// How many pages are there?
-	if(!$mybb->settings['threadsperpage'])
+	if(!$mybb->settings['threadsperpage'] || (int)$mybb->settings['threadsperpage'] < 1)
 	{
 		$mybb->settings['threadsperpage'] = 20;
 	}
@@ -808,9 +815,9 @@ if($mybb->input['action'] == "thread")
 	else // Linear display
 	{
 		$threadexbox = '';
-		if(!$mybb->settings['postsperpage'])
+		if(!$mybb->settings['postsperpage'] || (int)$mybb->settings['postsperpage'] < 1)
 		{
-			$mybb->settings['postperpage'] = 20;
+			$mybb->settings['postsperpage'] = 20;
 		}
 		
 		// Figure out if we need to display multiple pages.
@@ -1001,6 +1008,12 @@ if($mybb->input['action'] == "thread")
 	$similarthreads = '';
 	if($mybb->settings['showsimilarthreads'] != 0)
 	{
+		$own_perm = '';
+		if($forumpermissions['canonlyviewownthreads'] == 1)
+		{
+			$own_perm = " AND t.uid={$mybb->user['uid']}";
+		}
+
 		switch($db->type)
 		{
 			case "pgsql":
@@ -1008,7 +1021,7 @@ if($mybb->input['action'] == "thread")
 					SELECT t.*, t.username AS threadusername, u.username
 					FROM ".TABLE_PREFIX."threads t
 					LEFT JOIN ".TABLE_PREFIX."users u ON (u.uid = t.uid), plainto_tsquery ('".$db->escape_string($thread['subject'])."') AS query
-					WHERE t.fid='{$thread['fid']}' AND t.tid!='{$thread['tid']}' AND t.visible='1' AND t.closed NOT LIKE 'moved|%' AND t.subject @@ query
+					WHERE t.fid='{$thread['fid']}' AND t.tid!='{$thread['tid']}' AND t.visible='1' AND t.closed NOT LIKE 'moved|%' AND t.subject @@ query{$own_perm}
 					ORDER BY t.lastpost DESC
 					OFFSET 0 LIMIT {$mybb->settings['similarlimit']}
 				");
@@ -1018,7 +1031,7 @@ if($mybb->input['action'] == "thread")
 					SELECT t.*, t.username AS threadusername, u.username, MATCH (t.subject) AGAINST ('".$db->escape_string($thread['subject'])."') AS relevance
 					FROM ".TABLE_PREFIX."threads t
 					LEFT JOIN ".TABLE_PREFIX."users u ON (u.uid = t.uid)
-					WHERE t.fid='{$thread['fid']}' AND t.tid!='{$thread['tid']}' AND t.visible='1' AND t.closed NOT LIKE 'moved|%' AND MATCH (t.subject) AGAINST ('".$db->escape_string($thread['subject'])."') >= '{$mybb->settings['similarityrating']}'
+					WHERE t.fid='{$thread['fid']}' AND t.tid!='{$thread['tid']}' AND t.visible='1' AND t.closed NOT LIKE 'moved|%'{$own_perm} AND MATCH (t.subject) AGAINST ('".$db->escape_string($thread['subject'])."') >= '{$mybb->settings['similarityrating']}'
 					ORDER BY t.lastpost DESC
 					LIMIT 0, {$mybb->settings['similarlimit']}
 				");
@@ -1034,6 +1047,8 @@ if($mybb->input['action'] == "thread")
 			if($similar_thread['icon'] > 0 && $icon_cache[$similar_thread['icon']])
 			{
 				$icon = $icon_cache[$similar_thread['icon']];
+				$icon['path'] = htmlspecialchars_uni($icon['path']);
+				$icon['name'] = htmlspecialchars_uni($icon['name']);
 				$icon = "<img src=\"{$icon['path']}\" alt=\"{$icon['name']}\" />";
 			}
 			else

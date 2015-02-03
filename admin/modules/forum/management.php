@@ -19,7 +19,7 @@ $page->add_breadcrumb_item($lang->forum_management, "index.php?module=forum-mana
 
 if($mybb->input['action'] == "add" || $mybb->input['action'] == "edit" || $mybb->input['action'] == "copy" || $mybb->input['action'] == "permissions" || !$mybb->input['action'])
 {
-	if(isset($mybb->input['fid']) && ($mybb->input['action'] == "management" || $mybb->input['action'] == "edit" || $mybb->input['action'] == "copy" || !$mybb->input['action']))
+	if(!empty($mybb->input['fid']) && ($mybb->input['action'] == "management" || $mybb->input['action'] == "edit" || $mybb->input['action'] == "copy" || !$mybb->input['action']))
 	{
 		$sub_tabs['view_forum'] = array(
 			'title' => $lang->view_forum,
@@ -1291,6 +1291,16 @@ if($mybb->input['action'] == "edit")
 				$errors[] = $lang->error_not_empty;
 			}
 		}
+
+		if(!empty($mybb->input['linkto']) && empty($forum_data['linkto']))
+		{
+			$query = $db->simple_select('threads', 'COUNT(tid) as num_threads', "fid = '{$fid}'", array("limit" => 1));
+			if($db->fetch_field($query, "num_threads") > 0)
+			{
+				$errors[] = $lang->error_forum_link_not_empty;
+			}
+		}
+
 		
 		if(!$errors)
 		{
@@ -1334,7 +1344,7 @@ if($mybb->input['action'] == "edit")
 			if($pid != $forum_data['pid'])
 			{
 				// Update the parentlist of this forum.
-				$db->update_query("forums", array("parentlist" => make_parent_list($fid)), "fid='{$fid}'", 1);
+				$db->update_query("forums", array("parentlist" => make_parent_list($fid)), "fid='{$fid}'");
 				
 				// Rebuild the parentlist of all of the subforums of this forum
 				switch($db->type)
@@ -1349,7 +1359,7 @@ if($mybb->input['action'] == "edit")
 				
 				while($child = $db->fetch_array($query))
 				{
-					$db->update_query("forums", array("parentlist" => make_parent_list($child['fid'])), "fid='{$child['fid']}'", 1);
+					$db->update_query("forums", array("parentlist" => make_parent_list($child['fid'])), "fid='{$child['fid']}'");
 				}
 			}
 			
@@ -1844,14 +1854,6 @@ if($mybb->input['action'] == "deletemod")
 		$mod = $db->fetch_array($query);
 		
 		$db->delete_query("moderators", "mid='{$mid}'");
-		$query = $db->simple_select("moderators", "*", "id='{$mod['id']}' AND isgroup='0'");
-		if($db->num_rows($query) == 0)
-		{
-			$updatequery = array(
-				"usergroup" => "2"
-			);
-			$db->update_query("users", $updatequery, "uid='{$mod['id']}' AND usergroup != '4' AND usergroup != '3'");
-		}
 		$cache->update_moderators();
 		
 		$plugins->run_hooks("admin_forum_management_deletemod_commit");
@@ -1926,40 +1928,6 @@ if($mybb->input['action'] == "delete")
 			$stats['unapprovedposts'] += $forum['unapprovedposts'];
 			$stats['threads'] += $forum['threads'];
 			$stats['unapprovedthreads'] += $forum['unapprovedthreads'];
-		}
-
-		/**
-		 * This slab of code pulls out the moderators for this forum,
-		 * checks if they moderate any other forums, and if they don't
-		 * it moves them back to the registered usergroup
-		 */
-
-		$query = $db->simple_select("moderators", "*", "fid='$fid' AND isgroup='0'");
-		while($mod = $db->fetch_array($query))
-		{
-			$moderators[$mod['id']] = $mod['id'];
-		}
-		
-		if(is_array($moderators))
-		{
-			$mod_list = implode(",", $moderators);
-			$query = $db->simple_select("moderators", "*", "fid != '$fid' AND id IN ($mod_list) AND isgroup='0'");
-			while($mod = $db->fetch_array($query))
-			{
-				unset($moderators[$mod['id']]);
-			}
-		}
-		
-		if(is_array($moderators))
-		{
-			$mod_list = implode(",", $moderators);
-			if($mod_list)
-			{
-				$updatequery = array(
-					"usergroup" => "2"
-				);
-				$db->update_query("users", $updatequery, "uid IN ($mod_list) AND usergroup='6'");
-			}
 		}
 		
 		switch($db->type)

@@ -3,7 +3,7 @@
  * MyBB 1.6 English Language Pack
  * Copyright 2010 MyBB Group, All Rights Reserved
  * 
- * $Id$
+ * $Id: config_spiders.lang.php 5833 2012-05-24 08:39:00Z Tomm $
  */
  
 $l['spiders_bots'] = "Spiders / Bots";

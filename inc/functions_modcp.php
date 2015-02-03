@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id$
+ * $Id: functions_modcp.php 5813 2012-04-20 13:41:04Z Tomm $
  */
 
 /**

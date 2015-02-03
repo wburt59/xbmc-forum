@@ -3,7 +3,7 @@
  * MyBB 1.6 English Language Pack
  * Copyright 2010 MyBB Group, All Rights Reserved
  * 
- * $Id$
+ * $Id: online.lang.php 5788 2012-04-19 13:35:01Z Tomm $
  */
 
 $l['nav_online'] = "Who's Online";

@@ -577,7 +577,7 @@ if($fpermissions['canviewthreads'] != 0)
 }
 
 // How many pages are there?
-if(!$mybb->settings['threadsperpage'])
+if(!$mybb->settings['threadsperpage'] || (int)$mybb->settings['threadsperpage'] < 1)
 {
 	$mybb->settings['threadsperpage'] = 20;
 }
@@ -850,10 +850,9 @@ if($fpermissions['canviewthreads'] != 0)
 }
 
 // If user has moderation tools available, prepare the Select All feature
-$num_results = $db->num_rows($query);
-if(is_moderator($fid) && $num_results > 0)
+if(is_moderator($fid) && $threadcount > $perpage)
 {
-	$lang->page_selected = $lang->sprintf($lang->page_selected, intval($num_results));
+	$lang->page_selected = $lang->sprintf($lang->page_selected, count($threadcache));
 	$lang->select_all = $lang->sprintf($lang->select_all, intval($threadcount));
 	$lang->all_selected = $lang->sprintf($lang->all_selected, intval($threadcount));
 	eval("\$selectall = \"".$templates->get("forumdisplay_inlinemoderation_selectall")."\";");
@@ -929,9 +928,9 @@ if(!empty($threadcache))
 		$mybb->settings['maxmultipagelinks'] = 5;
 	}
 
-	if(!$mybb->settings['postsperpage'])
+	if(!$mybb->settings['postsperpage'] || (int)$mybb->settings['postsperpage'] < 1)
 	{
-		$mybb->settings['postperpage'] = 20;
+		$mybb->settings['postsperpage'] = 20;
 	}
 
 	foreach($threadcache as $thread)
@@ -986,6 +985,8 @@ if(!empty($threadcache))
 		if($thread['icon'] > 0 && $icon_cache[$thread['icon']])
 		{
 			$icon = $icon_cache[$thread['icon']];
+			$icon['path'] = htmlspecialchars_uni($icon['path']);
+			$icon['name'] = htmlspecialchars_uni($icon['name']);
 			$icon = "<img src=\"{$icon['path']}\" alt=\"{$icon['name']}\" />";
 		}
 		else

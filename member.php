@@ -148,7 +148,7 @@ if($mybb->input['action'] == "do_register" && $mybb->request_method == "post")
 		"subscriptionmethod" => $mybb->input['subscriptionmethod'],
 		"receivepms" => $mybb->input['receivepms'],
 		"pmnotice" => $mybb->input['pmnotice'],
-		"emailpmnotify" => $mybb->input['emailpmnotify'],
+		"pmnotify" => $mybb->input['pmnotify'],
 		"invisible" => $mybb->input['invisible'],
 		"dstcorrection" => $mybb->input['dstcorrection']
 	);
@@ -217,9 +217,9 @@ if($mybb->input['action'] == "do_register" && $mybb->request_method == "post")
 			$pmnoticecheck = " checked=\"checked\"";
 		}
 
-		if($mybb->input['emailpmnotify'] == 1)
+		if($mybb->input['pmnotify'] == 1)
 		{
-			$emailpmnotifycheck = "checked=\"checked\"";
+			$pmnotifycheck = "checked=\"checked\"";
 		}
 
 		if($mybb->input['invisible'] == 1)
@@ -705,7 +705,7 @@ if($mybb->input['action'] == "register")
 			$emailnotifycheck = '';
 			$receivepmscheck = "checked=\"checked\"";
 			$pmnoticecheck = " checked=\"checked\"";
-			$emailpmnotifycheck = '';
+			$pmnotifycheck = '';
 			$invisiblecheck = '';
 			if($mybb->settings['dstcorrection'] == 1)
 			{
@@ -766,7 +766,7 @@ if($mybb->input['action'] == "register")
 		foreach($languages as $lname => $language)
 		{
 			$language = htmlspecialchars_uni($language);
-			if($user['language'] == $lname)
+			if(isset($user['language']) && $user['language'] == $lname)
 			{
 				$langoptions .= "<option value=\"$lname\" selected=\"selected\">$language</option>\n";
 			}
@@ -789,7 +789,7 @@ if($mybb->input['action'] == "activate")
 
 	if($mybb->input['username'])
 	{
-		switch($mybb->settings['username'])
+		switch($mybb->settings['username_method'])
 		{
 			case 0:
 				$query = $db->simple_select("users", "*", "LOWER(username)='".$db->escape_string(my_strtolower($mybb->input['username']))."'", array('limit' => 1));

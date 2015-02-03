@@ -128,6 +128,11 @@ if(!$mybb->input['action'])
 	$perpage = intval($mybb->input['perpage']);
 	if(!$perpage)
 	{
+		if(!$mybb->settings['threadsperpage'] || (int)$mybb->settings['threadsperpage'] < 1)
+		{
+			$mybb->settings['threadsperpage'] = 20;
+		}
+
 		$perpage = $mybb->settings['threadsperpage'];
 	}
 
@@ -464,7 +469,20 @@ function get_admin_log_action($logitem)
 			}
 			break;
 		// == USERS ==
-		case 'admin_log_user_admin_permissions_edit': // default/group/user admin permissions
+		case 'admin_log_user_admin_permissions_edit': // editing default/group/user admin permissions
+			if($logitem['data'][0] > 0)
+			{
+				// User
+				$lang_string .= '_user';
+			}
+			elseif($logitem['data'][0] < 0)
+			{
+				// Group
+				$logitem['data'][0] = abs($logitem['data'][0]);
+				$lang_string .= '_group';
+			}
+			break;
+		case 'admin_log_user_admin_permissions_delete': // deleting group/user admin permissions
 			if($logitem['data'][0] > 0)
 			{
 				// User

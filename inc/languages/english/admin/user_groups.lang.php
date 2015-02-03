@@ -3,7 +3,7 @@
  * MyBB 1.6 English Language Pack
  * Copyright 2010 MyBB Group, All Rights Reserved
  * 
- * $Id$
+ * $Id: user_groups.lang.php 5771 2012-04-19 09:37:36Z Tomm $
  */
 
 $l['user_groups'] = "User Groups";

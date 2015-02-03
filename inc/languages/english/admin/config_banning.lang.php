@@ -3,7 +3,7 @@
  * MyBB 1.6 English Language Pack
  * Copyright 2010 MyBB Group, All Rights Reserved
  * 
- * $Id$
+ * $Id: config_banning.lang.php 5782 2012-04-19 11:56:13Z Tomm $
  */
  
 $l['banning'] = "Banning";

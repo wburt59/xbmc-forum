@@ -14,7 +14,7 @@ define('THIS_SCRIPT', 'newthread.php');
 
 $templatelist = "newthread,previewpost,loginbox,changeuserbox,newthread_postpoll,posticons,codebuttons,smilieinsert,newthread_multiquote_external,post_attachments_attachment_unapproved";
 $templatelist .= ",newthread_disablesmilies,newreply_modoptions,post_attachments_new,post_attachments,post_savedraftbutton,post_subscription_method,post_attachments_attachment_remove";
-$templatelist .= ",forumdisplay_rules,forumdisplay_rules_link,post_attachments_attachment_postinsert,post_attachments_attachment,newthread_options_signature";
+$templatelist .= ",forumdisplay_rules,forumdisplay_rules_link,post_attachments_attachment_postinsert,post_attachments_attachment,post_attachments_add,newthread_options_signature";
 $templatelist .= ",member_register_regimage,member_register_regimage_recaptcha,post_captcha_hidden,post_captcha,post_captcha_recaptcha,postbit_groupimage,postbit_online,postbit_away,postbit_offline";
 $templatelist .= ",postbit_avatar,postbit_find,postbit_pm,postbit_rep_button,postbit_www,postbit_email,postbit_reputation,postbit_warn,postbit_warninglevel,postbit_author_user,postbit_author_guest";
 $templatelist .= ",postbit_signature,postbit_classic,postbit,postbit_attachments_thumbnails_thumbnail,postbit_attachments_images_image,postbit_attachments_attachment,postbit_attachments_attachment_unapproved";
@@ -210,6 +210,40 @@ if($mybb->settings['maxposts'] > 0 && $mybb->usergroup['cancp'] != 1)
 	}
 }
 
+// If this isn't a logged in user, then we need to do some special validation.
+if($mybb->user['uid'] == 0)
+{
+	$username = htmlspecialchars_uni($mybb->input['username']);
+
+	// Check if username exists.
+	if(username_exists($mybb->input['username']))
+	{
+		// If it does throw back "username is taken"
+		error($lang->error_usernametaken);
+	}
+	// This username does not exist.
+	else
+	{
+		// If they didn't specify a username then give them "Guest"
+		if(!$mybb->input['username'])
+		{
+			$username = $lang->guest;
+		}
+		// Otherwise use the name they specified.
+		else
+		{
+			$username = htmlspecialchars_uni($mybb->input['username']);
+		}
+		$uid = 0;
+	}
+}
+// This user is logged in.
+else
+{
+	$username = $mybb->user['username'];
+	$uid = $mybb->user['uid'];
+}
+
 // Performing the posting of a new thread.
 if($mybb->input['action'] == "do_newthread" && $mybb->request_method == "post")
 {
@@ -217,40 +251,6 @@ if($mybb->input['action'] == "do_newthread" && $mybb->request_method == "post")
 	verify_post_check($mybb->input['my_post_key']);
 
 	$plugins->run_hooks("newthread_do_newthread_start");
-
-	// If this isn't a logged in user, then we need to do some special validation.
-	if($mybb->user['uid'] == 0)
-	{
-		$username = htmlspecialchars_uni($mybb->input['username']);
-
-		// Check if username exists.
-		if(username_exists($mybb->input['username']))
-		{
-			// If it does throw back "username is taken"
-			error($lang->error_usernametaken);
-		}
-		// This username does not exist.
-		else
-		{
-			// If they didn't specify a username then give them "Guest"
-			if(!$mybb->input['username'])
-			{
-				$username = $lang->guest;
-			}
-			// Otherwise use the name they specified.
-			else
-			{
-				$username = htmlspecialchars_uni($mybb->input['username']);
-			}
-			$uid = 0;
-		}
-	}
-	// This user is logged in.
-	else
-	{
-		$username = $mybb->user['username'];
-		$uid = $mybb->user['uid'];
-	}
 
 	// Attempt to see if this post is a duplicate or not
 	if($uid > 0)
@@ -659,9 +659,19 @@ if($mybb->input['action'] == "newthread" || $mybb->input['action'] == "editdraft
 		$valid_thread = $posthandler->verify_message();
 		$valid_subject = $posthandler->verify_subject();
 
+		// guest post --> verify author
+		if($new_thread['uid'] == 0)
+		{
+			$valid_username = $posthandler->verify_author();
+		}
+		else
+		{
+			$valid_username = true;
+		}
+
 		$post_errors = array();
 		// Fetch friendly error messages if this is an invalid post
-		if(!$valid_thread || !$valid_subject)
+		if(!$valid_thread || !$valid_subject || !$valid_username)
 		{
 			$post_errors = $posthandler->get_friendly_errors();
 		}
@@ -844,6 +854,7 @@ if($mybb->input['action'] == "newthread" || $mybb->input['action'] == "editdraft
 		$lang->attach_quota = $lang->sprintf($lang->attach_quota, $friendlyusage, $friendlyquota);
 		if($mybb->settings['maxattachments'] == 0 || ($mybb->settings['maxattachments'] != 0 && $attachcount < $mybb->settings['maxattachments']) && !$noshowattach)
 		{
+			eval("\$attach_add_options = \"".$templates->get("post_attachments_add")."\";");
 			eval("\$newattach = \"".$templates->get("post_attachments_new")."\";");
 		}
 		eval("\$attachbox = \"".$templates->get("post_attachments")."\";");

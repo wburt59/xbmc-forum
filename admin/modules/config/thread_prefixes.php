@@ -6,7 +6,7 @@
  * Website: http://mybb.com
  * License: http://mybb.com/about/license
  *
- * $Id$
+ * $Id: thread_prefixes.php 5352 2011-02-15 12:57:18Z Tomm $
  */
 
 // Disallow direct access to this file for security reasons

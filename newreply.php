@@ -12,7 +12,7 @@
 define("IN_MYBB", 1);
 define('THIS_SCRIPT', 'newreply.php');
 
-$templatelist = "newreply,previewpost,loginbox,changeuserbox,posticons,newreply_threadreview,newreply_threadreview_post,forumdisplay_rules,forumdisplay_rules_link,newreply_multiquote_external";
+$templatelist = "newreply,previewpost,loginbox,changeuserbox,posticons,newreply_threadreview,newreply_threadreview_post,forumdisplay_rules,forumdisplay_rules_link,newreply_multiquote_external,post_attachments_add";
 $templatelist .= ",smilieinsert,smilieinsert_getmore,codebuttons,post_attachments_new,post_attachments,post_savedraftbutton,newreply_modoptions,newreply_threadreview_more,newreply_disablesmilies,postbit_online,postbit_find,postbit_pm";
 $templatelist .= ",postbit_www,postbit_email,postbit_reputation,postbit_warninglevel,postbit_author_user,postbit_edit,postbit_quickdelete,postbit_inlinecheck,postbit_posturl,postbit_quote,postbit_multiquote,postbit_report,postbit_ignored,postbit,post_subscription_method";
 $templatelist .= ",post_attachments_attachment_postinsert,post_attachments_attachment_remove,post_attachments_attachment_unapproved,post_attachments_attachment,postbit_attachments_attachment,postbit_attachments,newreply_options_signature";
@@ -288,46 +288,46 @@ if($mybb->settings['maxposts'] > 0 && $mybb->usergroup['cancp'] != 1)
 	}
 }
 
+// If this isn't a logged in user, then we need to do some special validation.
+if($mybb->user['uid'] == 0)
+{
+	$username = htmlspecialchars_uni($mybb->input['username']);
+
+	// Check if username exists.
+	if(username_exists($mybb->input['username']))
+	{
+		// If it does throw back "username is taken"
+		error($lang->error_usernametaken);
+	}
+	// This username does not exist.
+	else
+	{
+		// If they didn't specify a username then give them "Guest"
+		if(!$mybb->input['username'])
+		{
+			$username = $lang->guest;
+		}
+		// Otherwise use the name they specified.
+		else
+		{
+			$username = htmlspecialchars_uni($mybb->input['username']);
+		}
+		$uid = 0;
+	}
+}
+// This user is logged in.
+else
+{
+	$username = $mybb->user['username'];
+	$uid = $mybb->user['uid'];
+}
+
 if($mybb->input['action'] == "do_newreply" && $mybb->request_method == "post")
 {
 	// Verify incoming POST request
 	verify_post_check($mybb->input['my_post_key']);
 
 	$plugins->run_hooks("newreply_do_newreply_start");
-
-	// If this isn't a logged in user, then we need to do some special validation.
-	if($mybb->user['uid'] == 0)
-	{
-		$username = htmlspecialchars_uni($mybb->input['username']);
-
-		// Check if username exists.
-		if(username_exists($mybb->input['username']))
-		{
-			// If it does throw back "username is taken"
-			error($lang->error_usernametaken);
-		}
-		// This username does not exist.
-		else
-		{
-			// If they didn't specify a username then give them "Guest"
-			if(!$mybb->input['username'])
-			{
-				$username = $lang->guest;
-			}
-			// Otherwise use the name they specified.
-			else
-			{
-				$username = htmlspecialchars_uni($mybb->input['username']);
-			}
-			$uid = 0;
-		}
-	}
-	// This user is logged in.
-	else
-	{
-		$username = $mybb->user['username'];
-		$uid = $mybb->user['uid'];
-	}
 
 	// Attempt to see if this post is a duplicate or not
 	if($uid > 0)
@@ -568,6 +568,11 @@ if($mybb->input['action'] == "do_newreply" && $mybb->request_method == "post")
 					{
 						redirect(get_thread_link($tid, 0, "lastpost"));
 					}
+				}
+				
+				if(!$mybb->settings['postsperpage'] || (int)$mybb->settings['postsperpage'] < 1)
+				{
+					$mybb->settings['postsperpage'] = 20;
 				}
 
 				// Lets see if this post is on the same page as the one we're viewing or not
@@ -903,10 +908,20 @@ if($mybb->input['action'] == "newreply" || $mybb->input['action'] == "editdraft"
 		// Now let the post handler do all the hard work.
 		$valid_post = $posthandler->verify_message();
 		$valid_subject = $posthandler->verify_subject();
+		
+		// guest post --> verify author
+		if($post['uid'] == 0)
+		{
+			$valid_username = $posthandler->verify_author();
+		}
+		else
+		{
+			$valid_username = true;
+		}
 
 		$post_errors = array();
 		// Fetch friendly error messages if this is an invalid post
-		if(!$valid_post || !$valid_subject)
+		if(!$valid_post || !$valid_subject || !$valid_username)
 		{
 			$post_errors = $posthandler->get_friendly_errors();
 		}
@@ -1054,6 +1069,7 @@ if($mybb->input['action'] == "newreply" || $mybb->input['action'] == "editdraft"
 
 		if($mybb->settings['maxattachments'] == 0 || ($mybb->settings['maxattachments'] != 0 && $attachcount < $mybb->settings['maxattachments']) && !$noshowattach)
 		{
+			eval("\$attach_add_options = \"".$templates->get("post_attachments_add")."\";");
 			eval("\$newattach = \"".$templates->get("post_attachments_new")."\";");
 		}
 
@@ -1116,9 +1132,9 @@ if($mybb->input['action'] == "newreply" || $mybb->input['action'] == "editdraft"
 
 	if($mybb->settings['threadreview'] != 0)
 	{
-		if(!$mybb->settings['postsperpage'])
+		if(!$mybb->settings['postsperpage'] || (int)$mybb->settings['postsperpage'] < 1)
 		{
-			$mybb->settings['postperpage'] = 20;
+			$mybb->settings['postsperpage'] = 20;
 		}
 
 		if(is_moderator($fid))

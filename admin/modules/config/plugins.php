@@ -105,9 +105,21 @@ if($mybb->input['action'] == "browse")
 			unset($tree['results']['result']);
 			$tree['results']['result'][0] = $only_plugin;
 		}
-	
+
+		require_once MYBB_ROOT . '/inc/class_parser.php';
+		$post_parser = new postParser();
+
 		foreach($tree['results']['result'] as $result)
 		{
+			$result['name']['value'] = htmlspecialchars_uni($result['name']['value']);
+			$result['description']['value'] = htmlspecialchars_uni($result['description']['value']);
+			$result['author']['value'] = $post_parser->parse_message($result['author']['value'], array(
+					'allow_html' => true
+				)
+			);
+			$result['version']['value'] = htmlspecialchars_uni($result['version']['value']);
+			$result['download_url']['value'] = htmlspecialchars_uni(html_entity_decode($result['download_url']['value']));
+
 			$table->construct_cell("<strong>{$result['name']['value']}</strong><br /><small>{$result['description']['value']}</small><br /><i><small>{$lang->created_by} {$result['author']['value']}</small></i>");
 			$table->construct_cell($result['version']['value'], array("class" => "align_center"));
 			$table->construct_cell("<strong><a href=\"http://mods.mybb.com/view/{$result['download_url']['value']}\" target=\"_blank\">{$lang->download}</a></strong>", array("class" => "align_center"));
@@ -292,6 +304,9 @@ if($mybb->input['action'] == "check")
 	{
 		if(version_compare($names[$plugin['attributes']['guid']]['version'], $plugin['version']['value'], "<"))
 		{
+			$plugin['download_url']['value'] = htmlspecialchars_uni($plugin['download_url']['value']);
+			$plugin['version']['value'] = htmlspecialchars_uni($plugin['version']['value']);
+
 			$table->construct_cell("<strong>{$names[$plugin['attributes']['guid']]['name']}</strong>");
 			$table->construct_cell("{$names[$plugin['attributes']['guid']]['version']}", array("class" => "align_center"));
 			$table->construct_cell("<strong><span style=\"color: #C00\">{$plugin['version']['value']}</span></strong>", array("class" => "align_center"));
@@ -562,14 +577,21 @@ if(!$mybb->input['action'])
 			// Plugin is installed but not active
 			else if($installed == true)
 			{
-				$table->construct_cell("<a href=\"index.php?module=config-plugins&amp;action=activate&amp;plugin={$codename}&amp;my_post_key={$mybb->post_code}\">{$lang->activate}</a>", array("class" => "align_center", "width" => 150));
-				if($uninstall_button)
+				if($compatibility_warning && !$uninstall_button)
 				{
-					$table->construct_cell("<a href=\"index.php?module=config-plugins&amp;action=deactivate&amp;uninstall=1&amp;plugin={$codename}&amp;my_post_key={$mybb->post_code}\">{$lang->uninstall}</a>", array("class" => "align_center", "width" => 150));
+					$table->construct_cell("{$compatibility_warning}", array("class" => "align_center", "colspan" => 2));
 				}
 				else
 				{
-					$table->construct_cell("&nbsp;", array("class" => "align_center", "width" => 150));
+					$table->construct_cell("<a href=\"index.php?module=config-plugins&amp;action=activate&amp;plugin={$codename}&amp;my_post_key={$mybb->post_code}\">{$lang->activate}</a>", array("class" => "align_center", "width" => 150));
+					if($uninstall_button)
+					{
+						$table->construct_cell("<a href=\"index.php?module=config-plugins&amp;action=deactivate&amp;uninstall=1&amp;plugin={$codename}&amp;my_post_key={$mybb->post_code}\">{$lang->uninstall}</a>", array("class" => "align_center", "width" => 150));
+					}
+					else
+					{
+						$table->construct_cell("&nbsp;", array("class" => "align_center", "width" => 150));
+					}
 				}
 			}
 			$table->construct_row();
