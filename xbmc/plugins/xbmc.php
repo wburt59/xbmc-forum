@@ -21,6 +21,11 @@ $plugins->add_hook("postbit", "xbmc_RenderPost");
 $plugins->add_hook("pre_output_page", "xbmc_PreOutputPage");
 $plugins->add_hook("forumdisplay_start", "xbmc_ForumDisplayStart");
 
+# override labels
+$plugins->add_hook("member_register_start", "xbmc_OverrideLanguage");
+$plugins->add_hook("member_register_agreement", "xbmc_OverrideLanguage");
+$plugins->add_hook("member_do_register_start", "xbmc_OverrideLanguage");
+
 $plugins->add_hook("showteam_start", "xbmc_DenyAccessToSectionIfNoValidUser");
 $plugins->add_hook("memberlist_start", "xbmc_DenyAccessToSectionIfNoValidUser");
 
